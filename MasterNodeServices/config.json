@@ -1,0 +1,5 @@
+{
+  "replication-rate" : "2",
+  "mapper-min-count" : "2",
+  "reducer-min-count" : "1"
+}
