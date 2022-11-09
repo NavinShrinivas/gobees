@@ -1,7 +1,6 @@
 package globals
 
-import (
-)
+import ()
 
 var Config_obj map[string]interface{}
 var Config_file_path string
