@@ -22,7 +22,6 @@ func NetworkEndpoints() {
 func main() {
 	log.Println(color.Colorize(color.Yellow, "Starting Master node..."))
 
-<<<<<<< HEAD
   //Some gloabls inits : 
   globals.MainWg = new(sync.WaitGroup)
   //--------------------
@@ -33,12 +32,6 @@ func main() {
   flag.Parse()
   globals.Debug_flag = *debug_flag_local //Pushing value to global variable
   //-------------------------------------
-	//Command line arguments flag configs :
-	flag.StringVar(&globals.Config_file_path, "config_path", "./config.json", "Path to configuration file")
-	debug_flag_local := flag.Bool("debug", false, "Whether to print debug outputs or not")
-	flag.Parse()
-	globals.Debug_flag = *debug_flag_local //Pushing value to global variable
-	//-------------------------------------
 
 	//Spawn configuration management routines
 	err := configuration.ConfigurationMain()
