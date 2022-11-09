@@ -1,0 +1,22 @@
+version: "2"
+services:
+  master:
+    image: "master_image"
+    ports:
+      - "3001:3001"
+  worker1:
+    image: "worker_image"
+    ports:
+      - "3002:3002"
+    network_mode: "host"
+    healthcheck:
+      interval: 5s
+      retries: 5
+  worker2:
+    image: "worker_image"
+    ports:
+      - "3003:3002"
+    network_mode: "host"
+    healthcheck:
+      interval: 5s
+      retries: 5

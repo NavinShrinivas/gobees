@@ -16,7 +16,8 @@ func NetworkEndpoints() {
 	http.HandleFunc("/", home.MainHome)
 	http.HandleFunc("/nodebirth", node.MainNodeBirth)
 	http.HandleFunc("/nodedeath", node.MainNodeBirth)
-	log.Fatal(http.ListenAndServe("0.0.0.0:3001", nil))
+	master_node_url := "0.0.0.0:"+globals.ServerPort
+	log.Fatal(http.ListenAndServe(master_node_url, nil))
 }
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
   //Command line arguments flag configs : 
   flag.StringVar(&globals.Config_file_path, "config_path", "./config.json", "Path to configuration file")
   debug_flag_local := flag.Bool("debug", false, "Whether to print debug outputs or not")
+ 	flag.StringVar(&globals.ServerPort,"port","3001","Port in which Master Node listens to.") 
   flag.Parse()
   globals.Debug_flag = *debug_flag_local //Pushing value to global variable
   //-------------------------------------
@@ -42,7 +44,7 @@ func main() {
   //Network endpoint routines
   globals.MainWg.Add(1)
   go NetworkEndpoints()
-  log.Println(color.Colorize(color.Green,"Listen on port 3001!"))
+  log.Println(color.Colorize(color.Green,"Listen on port "+globals.ServerPort))
   globals.MainWg.Wait()
 
 	//Shell routines
