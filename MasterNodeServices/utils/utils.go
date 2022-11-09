@@ -40,4 +40,18 @@ func SimpleSuccesssStatus(res string, w http.ResponseWriter){
   w.WriteHeader(http.StatusOK)
   w.Write(response_bytes)
   return
+
+func SimpleInvalidPath(res string, w http.ResponseWriter){
+	response := SimpleResponse{
+		Status: false,
+		Message: res
+	}
+  response_bytes, err := json.Marshal(response)
+  if err!=nil{
+    log.Println(color.Colorize(color.Red,"Error Marshalling response on a fail status"))
+    return
+  }
+  w.WriteHeader(http.StatusNotFound)
+  w.Write(response_bytes)
+  return
 }

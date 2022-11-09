@@ -3,6 +3,7 @@ package main
 import (
 	"MasterGobees/configuration"
 	"MasterGobees/endpoints/home"
+	"MasterGobees/endpoints/node"
 	"MasterGobees/globals"
 	"flag"
 	"log"
@@ -13,6 +14,8 @@ import (
 
 func NetworkEndpoints(){
   http.HandleFunc("/",home.MainHome)
+  http.HandleFunc("/nodebirth", node.MainNodeBirth)
+  http.HandleFunc("/nodedeath", node.MainNodeBirth)
   log.Fatal(http.ListenAndServe("0.0.0.0:3001", nil))
 }
 
