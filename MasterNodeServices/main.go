@@ -8,7 +8,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
-
+	"sync"
 	"github.com/TwiN/go-color"
 )
 
@@ -21,6 +21,10 @@ func NetworkEndpoints(){
 
 func main(){
   log.Println(color.Colorize(color.Yellow,"Starting Master node..."))
+
+  //Some gloabls inits : 
+  globals.MainWg = new(sync.WaitGroup)
+  //--------------------
 
   //Command line arguments flag configs : 
   flag.StringVar(&globals.Config_file_path, "config_path", "./config.json", "Path to configuration file")
@@ -36,11 +40,10 @@ func main(){
   }
 
   //Network endpoint routines
+  globals.MainWg.Add(1)
   go NetworkEndpoints()
   log.Println(color.Colorize(color.Green,"Listen on port 3001!"))
-  for{
-    //Need to use wait groups to make main thread wait instead of this stupid for loop solution
-  }
+  globals.MainWg.Wait()
 
   //Shell routines 
 
