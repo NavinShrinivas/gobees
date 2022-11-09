@@ -1,13 +1,14 @@
 package configuration
 
-import(
-  "log"
-  "os"
-  "encoding/json"
-  "errors"
-  "MasterGobees/globals"
-  "github.com/TwiN/go-color"
-  "fmt"
+import (
+	"MasterGobees/globals"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/TwiN/go-color"
 )
 
 func ConfigurationMain() error{
