@@ -20,7 +20,7 @@ func main(){
   log.Println(color.Colorize(color.Yellow,"Starting Master node..."))
 
   //Command line arguments flag configs : 
-  flag.StringVar(&globals.Config_file_path, "config", "./config.json", "Path to configuration file")
+  flag.StringVar(&globals.Config_file_path, "config_path", "./config.json", "Path to configuration file")
   debug_flag_local := flag.Bool("debug", false, "Whether to print debug outputs or not")
   flag.Parse()
   globals.Debug_flag = *debug_flag_local //Pushing value to global variable
@@ -34,7 +34,7 @@ func main(){
 
   //Network endpoint routines
   go NetworkEndpoints()
-  log.Println(color.Colorize(color.Green,"Listen on port 3000!"))
+  log.Println(color.Colorize(color.Green,"Listen on port 3001!"))
   for{
     //Need to use wait groups to make main thread wait instead of this stupid for loop solution
   }

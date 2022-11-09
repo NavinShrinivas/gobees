@@ -26,6 +26,7 @@ func ConfigurationMain() error{
     return errors.New("Error parsing configuration file :(.")
   }
   if globals.Debug_flag{
+    fmt.Println("debug print : ",globals.Config_obj["replication-rate"])
     fmt.Println("debug print : ",globals.Config_obj)
   }
   
