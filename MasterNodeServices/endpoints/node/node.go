@@ -8,7 +8,7 @@ import (
 func MainNodeBirth(w http.ResponseWriter, r *http.Request){
   //Need to store statefully node info
   if r.Method != "POST"{
-    utils.("Ivalid path", w)
+    utils.SimpleInvalidPath("Ivalid path", w)
     return
   }
 }
