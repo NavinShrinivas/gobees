@@ -5,6 +5,7 @@ import (
 	"MasterGobees/endpoints/home"
 	"MasterGobees/endpoints/node"
 	"MasterGobees/globals"
+	"MasterGobees/shell"
 	"flag"
 	"log"
 	"net/http"
@@ -45,8 +46,8 @@ func main() {
   globals.MainWg.Add(1)
   go NetworkEndpoints()
   log.Println(color.Colorize(color.Green,"Listen on port "+globals.ServerPort))
+
+	//Shell routines, all prints after shell Initialize must be printed only using print function in shell
+	shell.Initialize()
   globals.MainWg.Wait()
-
-	//Shell routines
-
 }
