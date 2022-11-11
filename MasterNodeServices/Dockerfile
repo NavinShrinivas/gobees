@@ -11,5 +11,3 @@ COPY . ./
 RUN go build -o /MasterGobees
 
 EXPOSE 3001
-
-CMD [ "/MasterGobees" ]
