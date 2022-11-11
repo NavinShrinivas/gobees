@@ -12,4 +12,4 @@ RUN go build -o /WokerGobees
 
 EXPOSE 3002
 
-CMD [ "/WokerGobees" ]
+CMD [ "/WokerGobees -master="http://0.0.0.0:3001/" "  ]
