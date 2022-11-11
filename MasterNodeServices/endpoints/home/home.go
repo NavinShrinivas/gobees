@@ -9,7 +9,7 @@ import (
 
 
 func MainHome(w http.ResponseWriter,r *http.Request){
-  shell.PrintToShell(color.Colorize(color.Yellow, "[ENDPOINT] Access on home endpoint."))
+	shell.PrintToShell(color.Colorize(color.Yellow, "[ENDPOINT] Access on home endpoint."))
   utils.SimpleSuccesssStatus("This is the MasterNode home end point. Master node is alive.", w)
   return
 }

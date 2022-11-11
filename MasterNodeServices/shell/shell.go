@@ -20,6 +20,8 @@ func show_commands(command_parse []string){
 		fmt.Println("Past job history : ")
 		return
 	}
+	fmt.Println("Invalid command")
+	return
 }
 
 func commandParser(command string){
@@ -35,7 +37,6 @@ func PrintToShell(str string){
   fmt.Println()
   fmt.Println(str)
   fmt.Print("master>")
-  reader.WriteTo(os.Stdin)
 }
 
 func CommandListner(){

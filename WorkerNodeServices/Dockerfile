@@ -8,8 +8,6 @@ RUN go mod download
 
 COPY . ./
 
-RUN go build -o /WokerGobees
+RUN go build -o /WorkerGobees
 
 EXPOSE 3002
-
-CMD [ "/WokerGobees -master="http://0.0.0.0:3001/" "  ]

@@ -4,6 +4,9 @@ services:
     image: "master_image"
     ports:
       - "3001:3001"
+    # Created below two lines for keeping container alive
+    tty: true
+    stdin_open: true
   worker1:
     image: "worker_image"
     ports:
@@ -12,6 +15,8 @@ services:
     healthcheck:
       interval: 5s
       retries: 5
+    tty: true
+    stdin_open: true
   worker2:
     image: "worker_image"
     ports:
@@ -20,3 +25,5 @@ services:
     healthcheck:
       interval: 5s
       retries: 5
+    tty: true
+    stdin_open: true
