@@ -16,7 +16,7 @@ import (
 func NetworkEndpoints() {
 	http.HandleFunc("/", home.MainHome)
 	http.HandleFunc("/nodebirth", node.MainNodeBirth)
-	http.HandleFunc("/nodedeath", node.MainNodeBirth)
+	// http.HandleFunc("/nodedeath", node.MainNodeBirth)
 	master_node_url := "0.0.0.0:"+globals.ServerPort
 	log.Fatal(http.ListenAndServe(master_node_url, nil))
 }
@@ -26,6 +26,7 @@ func main() {
 
   //Some gloabls inits : 
   globals.MainWg = new(sync.WaitGroup)
+  globals.WorkerNodesMetadata = make([]globals.WorkerNode,10000) //Upper limit of 10000 nodes
   //--------------------
 
   //Command line arguments flag configs : 
