@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"MasterGobees/globals"
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/TwiN/go-color"
 )
@@ -56,4 +58,19 @@ func SimpleInvalidPath(res string, w http.ResponseWriter){
   w.WriteHeader(http.StatusNotFound)
   w.Write(response_bytes)
   return
+}
+
+func ExistSequence(){
+	fd1, _ := os.Create("./NodeMeta.json")
+	byte_buffer1, _:= json.Marshal(globals.WorkerNodesMetadata)
+	fd1.Write(byte_buffer1)
+	fd1.Close()
+
+	fd2, _ := os.Create("./FileMeta.json")
+	byte_buffer2, _:= json.Marshal(globals.WorkerNodesMetadata)
+	fd2.Write(byte_buffer2)
+	fd2.Close()
+
+	log.Println(color.Colorize(color.Green,"Storing meta for future use. Adios."))
+	os.Exit(0)
 }

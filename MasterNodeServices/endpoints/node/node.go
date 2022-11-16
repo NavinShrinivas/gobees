@@ -31,11 +31,27 @@ func MainNodeBirth(w http.ResponseWriter, r *http.Request){
 	new_worker_node := globals.WorkerNode{
 		Ip_addr : res_body_obj["ip_addr"].(string),
 		Port : res_body_obj["port"].(string),
-		Files : make([]string,10000), //Limit of at max 10000 files
+	}
+	for _,v := range globals.WorkerNodesMetadata{
+		if new_worker_node.Ip_addr == v.Ip_addr && v.Port == new_worker_node.Port{
+			shell.PrintToShell(color.Colorize(color.Green,"Node already registered!"))
+			utils.SimpleSuccesssStatus("Node already register from previous run", w)
+			return
+		}
 	}
 	globals.WorkerNodesMetadata = append(globals.WorkerNodesMetadata,new_worker_node)
 	utils.SimpleSuccesssStatus("Successfully Added node to cluster!", w)
 	shell.PrintToShell(color.Colorize(color.Green,"Added one Node to cluster : "+new_worker_node.Ip_addr+":"+new_worker_node.Port))
+	return
+}
+
+func ResetNode(w http.ResponseWriter, r *http.Request){
+	w.WriteHeader(http.StatusOK)
+	body, err := json.Marshal(globals.NewCluster)
+	if err!=nil{
+		shell.PrintToShell(color.Colorize(color.Red, "Not able to comm with worker :("))
+	}
+	w.Write(body)
 	return
 }
 

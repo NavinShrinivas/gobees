@@ -3,6 +3,7 @@ package main
 import (
 	"WorkerGobees/endpoints/home"
 	"WorkerGobees/endpoints/lifestatus"
+	"WorkerGobees/endpoints/data"
 	"WorkerGobees/globals"
 	"encoding/json"
 	"flag"
@@ -17,6 +18,7 @@ import (
 
 func mainHttpHandler(){
 	http.HandleFunc("/", home.MainHome)
+	http.HandleFunc("/storefile", data.StoreFile)
 	// http.HandleFunc("/nodedeath", node.MainNodeBirth)
 	master_node_url := globals.Ip+":"+globals.Port
 	log.Fatal(http.ListenAndServe(master_node_url, nil))
