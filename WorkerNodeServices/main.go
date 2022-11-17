@@ -58,13 +58,12 @@ func main() {
 	if res_body_obj["status"] == false{
 		log.Fatal("Master Node doesn't seem to be ready, please check master nodes status.")
 	}
-	log.Println(color.Colorize(color.Green, "Worker node is ready, registering worker node."))
-	lifestatus.NodeBirthRegister() //Register Worker Node
-
 	//Starting main service
 	Mainwg = new(sync.WaitGroup)
 	Mainwg.Add(1)
 	go mainHttpHandler()
+	log.Println(color.Colorize(color.Green, "Worker node is ready, registering worker node."))
+	lifestatus.NodeBirthRegister() //Register Worker Node
 	Mainwg.Wait()
 	//Need to start listening for stuff from master node from here on
 }

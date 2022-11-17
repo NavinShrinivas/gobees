@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"encoding/json"
+	"errors"
 
 	"github.com/TwiN/go-color"
 )
@@ -130,7 +131,7 @@ func UploadData(TempFilePath string, node string, fileName string) error{
 	}
 	if res_body_obj["status"] == false{
 	  log.Println(color.Colorize(color.Red, "One of the Worker ran into an error while uploading file, node :"+node))
-	  return err
+	  return errors.New("Error from WorkerNode")
 	}
 	log.Println(color.Colorize(color.Green,"Done writing part file to : "+node))
   return nil

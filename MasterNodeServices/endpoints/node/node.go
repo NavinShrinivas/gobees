@@ -55,6 +55,15 @@ func ResetNode(w http.ResponseWriter, r *http.Request){
 	return
 }
 
+// func KillNode(){
+// 	for _,v := range globals.WorkerNodesMetadata{
+// 		request_body, err := json.Marshal(true)
+// 		if err!=nil{
+// 			log.Println(color.Colorize(color.Red,"Error turning off on of the WorkerNode"))
+// 		}
+// 	}
+// }
+
 
 // [TODO] As for the deliverable, Node failures are not to be handled
 
