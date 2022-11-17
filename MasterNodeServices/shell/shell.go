@@ -79,6 +79,54 @@ func handleFiles(command_parse []string){
 	}
 }
 
+
+func commandParsing(command_parse []string)( map[string]string,error ){
+	var command_map map[string]string
+	command_map = make(map[string]string)
+	for _,v := range command_parse{
+		if len(v) == 0{
+			continue
+		}
+		if string(v[0]) == "-" && string(v[1]) != "-"{
+			key_val_string := v[1:]
+			array := strings.Split(key_val_string,"=")
+			command_map[array[0]] = array[1]
+		} else if string(v[0])+string(v[1]) == "--"{
+			key_val_string := v[2:]
+			array := strings.Split(key_val_string,"=")
+			command_map[array[0]] = array[1]
+		}
+	}
+	return command_map,nil
+}
+
+func newHandler(command_parse []string){
+	if command_parse[1] == "JOB"{
+		//Map reduce job incoming
+		//Time to write command parsing tool
+		command_vars, _ := commandParsing(command_parse)
+		//Need to check if everything we need is here and if it is valid
+		//Mapper //Reducer //IN file //OUT file
+		input_file_ss_name, ok:= command_vars["IN"]
+		if !ok{
+			log.Println(color.Colorize(color.Red,"Not all needed parameters for Map Reduce jobs given"))
+			return
+		}
+		file_in_SS := false;
+		for _,v := range globals.FileMetadata{
+			if v.File_name == input_file_ss_name{
+				file_in_SS = true
+				break
+			}
+		}
+		if !file_in_SS{
+			//If we have reached last but not found file in SS record
+			log.Println(color.Colorize(color.Red,"Given file not found in Share Storage (SS)"))
+			return
+		}
+	}
+}
+
 func commandParser(command string){
 	command_parse := strings.Split(strings.Trim(command,"\n"), " ")
 	if command_parse[0] == "SHOW" && len(command_parse) >= 2{
@@ -91,6 +139,11 @@ func commandParser(command string){
 	}
 	if command_parse[0] == "EXIT"{
 		utils.ExistSequence()
+		//There is no coming back from exit sequence
+	}
+	if command_parse[0] == "NEW"{
+		newHandler(command_parse)
+		return
 	}
 	fmt.Println("Invalid command")
 }
