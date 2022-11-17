@@ -3,6 +3,7 @@ package shell
 import (
 	"MasterGobees/utils"
 	"MasterGobees/endpoints/data"
+	"MasterGobees/endpoints/jobs"
 	"MasterGobees/globals"
 	"bufio"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"regexp"
 
 	"github.com/TwiN/go-color"
 )
@@ -80,31 +82,22 @@ func handleFiles(command_parse []string){
 }
 
 
-func commandParsing(command_parse []string)( map[string]string,error ){
+func commandParsing(command string)( map[string]string,error ){
 	var command_map map[string]string
 	command_map = make(map[string]string)
-	for _,v := range command_parse{
-		if len(v) == 0{
-			continue
-		}
-		if string(v[0]) == "-" && string(v[1]) != "-"{
-			key_val_string := v[1:]
-			array := strings.Split(key_val_string,"=")
-			command_map[array[0]] = array[1]
-		} else if string(v[0])+string(v[1]) == "--"{
-			key_val_string := v[2:]
-			array := strings.Split(key_val_string,"=")
-			command_map[array[0]] = array[1]
-		}
+	var re = regexp.MustCompile(`(?m)[\-](\w*)=([^-]*)`)
+	for _, match := range re.FindAllString(command, -1) {
+		sub_res := re.FindStringSubmatch(match)
+		command_map[sub_res[1]] = sub_res[2]
 	}
 	return command_map,nil
 }
 
-func newHandler(command_parse []string){
+func newHandler(command_parse []string, command string){
 	if command_parse[1] == "JOB"{
 		//Map reduce job incoming
 		//Time to write command parsing tool
-		command_vars, _ := commandParsing(command_parse)
+		command_vars, _ := commandParsing(command)
 		//Need to check if everything we need is here and if it is valid
 		//Mapper //Reducer //IN file //OUT file
 		input_file_ss_name, ok:= command_vars["IN"]
@@ -124,6 +117,19 @@ func newHandler(command_parse []string){
 			log.Println(color.Colorize(color.Red,"Given file not found in Share Storage (SS)"))
 			return
 		}
+		//Check if mapper and reducer file exists
+		_, err := os.Stat(strings.Split(command_vars["mapper"]," ")[0])
+		if err!=nil{
+			log.Println(color.Colorize(color.Red, "Mapper file provided does not exists."))
+			return
+		}
+		_, err = os.Stat(strings.Split(command_vars["reducer"]," ")[0])
+		if err!=nil{
+			log.Println(color.Colorize(color.Red, "Reducer file provided does not exists."))
+			return
+		}
+		//Need to check if output file with that name exists, after Map Reduce job tho
+		jobs.SendMapJobs(command_vars["mapper"], command_vars["IN"])
 	}
 }
 
@@ -142,7 +148,7 @@ func commandParser(command string){
 		//There is no coming back from exit sequence
 	}
 	if command_parse[0] == "NEW"{
-		newHandler(command_parse)
+		newHandler(command_parse, command)
 		return
 	}
 	fmt.Println("Invalid command")
