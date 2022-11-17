@@ -16,6 +16,7 @@ func StoreFile(w http.ResponseWriter, r *http.Request) {
     file, handler, err := r.FormFile("File")
     if err != nil {
         log.Println(color.Colorize(color.Red, "Error recieving file, please check."))
+        utils.SimpleFailStatus("Failed storing file in wokrker",w)
         return
     }
     defer file.Close()
@@ -29,11 +30,15 @@ func StoreFile(w http.ResponseWriter, r *http.Request) {
     defer new_fd.Close()
     if err != nil {
     	log.Println(err)
+      utils.SimpleFailStatus("Failed storing file in wokrker",w)
+      return
     }
 
     _, err = new_fd.Write(fileBytes)
     if err != nil {
         log.Println(color.Colorize(color.Red,"Error storing file!"))
+        utils.SimpleFailStatus("Failed storing file in wokrker",w)
+        return
     }
     log.Println(color.Colorize(color.Green, "Storing split file success."))
     utils.SimpleSuccesssStatus("",w)

@@ -74,6 +74,7 @@ func SplitAndUploadFile(file_path string, delimiter string) error{
           number_of_delims_in_split+=1
         }
       }
+      os.Mkdir("./temp_splits",0777)
       f_split, err:= os.Create("./temp_splits/"+filepath.Base(file_path)+"_PART00000")
       if err!=nil{
         log.Println(color.Colorize(color.Red, "Error creatring split"))
