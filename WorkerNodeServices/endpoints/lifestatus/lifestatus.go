@@ -19,7 +19,16 @@ type NodeInfo struct {
 
 func NodeBirthRegister() {
 
-	response, err := http.Get(globals.MasterUrl + "resetnode")
+	new_node_info := NodeInfo{
+		Ip_addr: globals.Ip,
+		Port:    globals.Port,
+	}
+	request_bytes, err := json.Marshal(new_node_info)
+	if err != nil {
+		log.Fatal(color.Colorize(color.Red, "Error registering node with master node, please check IP address of master"))
+	}
+	request_bytes_stream := bytes.NewBuffer(request_bytes)
+	response, err := http.Post(globals.MasterUrl + "resetnode", "application/json",request_bytes_stream)
 	res_body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -31,11 +40,6 @@ func NodeBirthRegister() {
 		log.Println(color.Colorize(color.Red, "Persisting data from previous cluster run"))
 	}
 
-	new_node_info := NodeInfo{
-		Ip_addr: globals.Ip,
-		Port:    globals.Port,
-	}
-	request_bytes, err := json.Marshal(new_node_info)
 	if err != nil {
 		log.Fatal(color.Colorize(color.Red, "Error registering node with master node, please check IP address of master"))
 	}

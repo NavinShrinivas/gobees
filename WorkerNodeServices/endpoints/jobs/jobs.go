@@ -2,20 +2,17 @@ package jobs
 
 import (
 	"WorkerGobees/utils"
-	"bufio"
-	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
-	"sync"
 
 	"github.com/TwiN/go-color"
 )
 
 func MapJob(w http.ResponseWriter, r *http.Request) {
+	os.Remove("./MAPPART00000")
 	log.Println(color.Colorize(color.Yellow, "[ENDPOINT] Reciving a Map job..."))
 
 	file, handler, err := r.FormFile("MapperFile")
@@ -64,7 +61,10 @@ func MapJob(w http.ResponseWriter, r *http.Request) {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(err)
-		utils.SimpleFailStatus("Error storing output after map job", w)
+		log.Println(color.Colorize(color.Red,"error running mapper file"))
+	  os.WriteFile("./MAPERROR", out, 0777)
+	  log.Println(string(out))
+		utils.SimpleFailStatus(string(out), w)
 		return
 	}
 	err = os.WriteFile("./MAPPART00000", out, 0777)
@@ -74,40 +74,6 @@ func MapJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println(color.Colorize(color.Green, "Succesfully completed assigned map task"))
-	os.Remove("./MAPPART00000")
 	os.Remove("./" + handler.Filename)
 	utils.SimpleSuccesssStatus("Finished map taks!", w)
-}
-func copyStdin(stdin io.Writer, input_file_name string, error_chan chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-	split_file, err := os.ReadFile("./SS/" + input_file_name)
-	if err != nil {
-		log.Println(color.Colorize(color.Red, "split not found!"))
-		error_chan <- err
-		return
-	}
-	io.WriteString(stdin, string(split_file))
-	error_chan <- nil
-}
-
-func copyStdout(r io.Reader, file_name string, error_chan chan error, wg *sync.WaitGroup) {
-	wg.Done()
-	os.Remove("./" + file_name)
-	file, err := os.Create("./" + file_name)
-	if err != nil {
-		log.Println(color.Colorize(color.Red, "error storing intermediate output"))
-		error_chan <- err
-		return
-	}
-	bufio_reader := bufio.NewReader(r)
-	for {
-		lineout, _, _ := bufio_reader.ReadLine()
-		fmt.Println(string(lineout))
-		file.Write(lineout)
-		if err == io.EOF {
-			break
-		}
-	}
-	fmt.Println("stdout done")
-	error_chan <- nil
 }

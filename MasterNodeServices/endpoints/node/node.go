@@ -46,7 +46,30 @@ func MainNodeBirth(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResetNode(w http.ResponseWriter, r *http.Request) {
+	//If already in meta we need to make sure the node "re-joining does not reset itself!"
+	var res_body_obj map[string]interface{}
+	res_body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = json.Unmarshal(res_body, &res_body_obj)
+	if err != nil {
+		log.Fatal(color.Colorize(color.Red, "[ENDPOINT ERROR] Error parsing request from Worker node reset question."))
+	}
+	new_worker_node := globals.WorkerNode{
+		Ip_addr: res_body_obj["ip_addr"].(string),
+		Port:    res_body_obj["port"].(string),
+	}
+
 	w.WriteHeader(http.StatusOK)
+	for _, v := range globals.WorkerNodesMetadata {
+		if new_worker_node.Ip_addr == v.Ip_addr && v.Port == new_worker_node.Port {
+			shell.PrintToShell(color.Colorize(color.Green,"node rejoining, hence no node reset."))
+			body, _:= json.Marshal("false")
+			w.Write(body)
+			return
+		}
+	}
 	body, err := json.Marshal(globals.NewCluster)
 	if err != nil {
 		shell.PrintToShell(color.Colorize(color.Red, "Not able to comm with worker :("))

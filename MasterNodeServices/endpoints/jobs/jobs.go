@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -90,7 +91,9 @@ func NodeMapJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan ch
 		return
 	}
 	if res_body_obj["status"] == false {
-		log.Println(color.Colorize(color.Red, "One of the Worker ran into an error while uploading file, node :"+node))
+		log.Println(color.Colorize(color.Red, "One of the Worker ran into an error while running map, node :"+node))
+		log.Println("Error from node : ")
+		fmt.Println(res_body_obj["message"])
 		err_chan <- errors.New("Error from WorkerNode")
 		wg.Done()
 		return
