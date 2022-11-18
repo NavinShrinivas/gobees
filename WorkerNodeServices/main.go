@@ -1,9 +1,10 @@
 package main
 
 import (
-	"WorkerGobees/endpoints/home"
-	"WorkerGobees/endpoints/lifestatus"
 	"WorkerGobees/endpoints/data"
+	"WorkerGobees/endpoints/home"
+	"WorkerGobees/endpoints/jobs"
+	"WorkerGobees/endpoints/lifestatus"
 	"WorkerGobees/globals"
 	"encoding/json"
 	"flag"
@@ -16,15 +17,17 @@ import (
 	"github.com/TwiN/go-color"
 )
 
-func mainHttpHandler(){
+func mainHttpHandler() {
 	http.HandleFunc("/", home.MainHome)
 	http.HandleFunc("/storefile", data.StoreFile)
+	http.HandleFunc("/mapjob", jobs.MapJob)
 	// http.HandleFunc("/nodedeath", node.MainNodeBirth)
-	master_node_url := globals.Ip+":"+globals.Port
+	master_node_url := globals.Ip + ":" + globals.Port
 	log.Fatal(http.ListenAndServe(master_node_url, nil))
 }
 
 var Mainwg *sync.WaitGroup
+
 func main() {
 	log.Println(color.Colorize(color.Yellow, "Starting worker node..."))
 
@@ -34,11 +37,11 @@ func main() {
 	flag.Parse()
 
 	//Checking if given port is free
-	ln, err := net.Listen("tcp", ":" + globals.Port)
-  if err != nil {
-    log.Fatal(color.Colorize(color.Red, "Given port is not free, please give some other port."))
-  }
-  ln.Close()
+	ln, err := net.Listen("tcp", ":"+globals.Port)
+	if err != nil {
+		log.Fatal(color.Colorize(color.Red, "Given port is not free, please give some other port."))
+	}
+	ln.Close()
 
 	//Checking is Master URL is correct
 	log.Println(color.Colorize(color.Yellow, "Checking status of master node..."))
@@ -52,10 +55,10 @@ func main() {
 	}
 	var res_body_obj map[string]interface{}
 	err = json.Unmarshal(res_body, &res_body_obj)
-	if err!=nil{
-		log.Fatal(color.Colorize(color.Red,"Something went wrong reading reponse from master node, please check master node url."))
+	if err != nil {
+		log.Fatal(color.Colorize(color.Red, "Something went wrong reading reponse from master node, please check master node url."))
 	}
-	if res_body_obj["status"] == false{
+	if res_body_obj["status"] == false {
 		log.Fatal("Master Node doesn't seem to be ready, please check master nodes status.")
 	}
 	//Starting main service
