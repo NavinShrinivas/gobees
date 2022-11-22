@@ -16,6 +16,8 @@ import (
 
 	"github.com/TwiN/go-color"
 	hash "github.com/theTardigrade/golang-hash"
+	"github.com/twotwotwo/sorts" //Gives fast as hek in memory Quick Sort impl
+	"fmt"
 )
 
 func MapJob(w http.ResponseWriter, r *http.Request) {
@@ -273,6 +275,62 @@ func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 		}
   }
   os.Remove("./"+handler.Filename)
+  err = InMemSorter("./INTERPART00002")
+  if err!=nil{
+  	log.Println(color.Colorize(color.Red, "Failed sorting file"))
+  	utils.SimpleFailStatus("Failed sorting file from shuffling stage", w)
+  	return 
+  }
 	utils.SimpleSuccesssStatus("",w)
 	return
+}
+
+type record struct{
+  Key string
+	Value string
+}
+type InMemFile []record
+
+func (a InMemFile) Len() int{
+	return (len(a))
+}
+
+func (a InMemFile) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+func (a InMemFile) Key(i int) string {
+	return a[i].Key
+}
+
+func (a InMemFile) Less(i, j int) bool {
+	if a[i].Key <= a[j].Key{
+		return true
+	}
+	return false
+}
+
+func InMemSorter(file_name string) error{
+	raw_file, err := os.ReadFile(file_name)
+	if err!=nil{
+		log.Println(color.Colorize(color.Red, "[SORT ERROR] Error reading file from shuffle task, maybe shuffle failed?"))
+		return err
+	}
+	file_array := strings.Split(string(raw_file),"\n")
+	var file InMemFile
+	for _,v := range file_array{
+		kv_pair := strings.Split(v, ",")
+		new_record :=  record{
+			Key : kv_pair[0],
+			Value : kv_pair[1],
+		}
+		file = append(file, new_record)
+	}
+	sorts.ByString(file)
+	fmt.Println(file)
+	output_string := ""
+	for _,v := range file{
+		temp := v.Key+","+v.Value+"\n"
+		output_string += temp
+	}
+	os.WriteFile("./INTERPART00003", []byte(output_string), 0777)
+	return nil
 }
