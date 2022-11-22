@@ -191,5 +191,7 @@ func NodeShuffleJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_cha
 	log.Println(color.Colorize(color.Green, "Done with Shuffle job on : "+node))
 	err_chan <- nil
 	wg.Done()
+	//Shuffler function is also made to sort, after these three steps the file remaining is
+	//INTERPART00003
 	return
 }

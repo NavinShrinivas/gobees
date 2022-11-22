@@ -19,8 +19,9 @@ import (
 )
 
 func MapJob(w http.ResponseWriter, r *http.Request) {
-	os.Remove("./MAPPART00000")
-	os.Remove("./SHUFFLEPART00000")
+	os.Remove("./INTERPART00001") //Output from mapper stage
+	os.Remove("./INTERPART00002") //Output from suffle stage
+	os.Remove("./INTERPART00003") //Output from sorting
 	log.Println(color.Colorize(color.Yellow, "[ENDPOINT] Reciving a Map job..."))
 
 	file, handler, err := r.FormFile("MapperFile")
@@ -75,7 +76,7 @@ func MapJob(w http.ResponseWriter, r *http.Request) {
 		utils.SimpleFailStatus(string(out), w)
 		return
 	}
-	err = os.WriteFile("./MAPPART00000", out, 0777)
+	err = os.WriteFile("./INTERPART00001", out, 0777)
 	if err != nil {
 		log.Println(err)
 		log.Println(color.Colorize(color.Red, "Error storing map output"))
@@ -90,7 +91,7 @@ func MapJob(w http.ResponseWriter, r *http.Request) {
 func StartShuffle(w http.ResponseWriter, r *http.Request){
 
 	log.Println(color.Colorize(color.Yellow, "[ENDPOINT] Reciving a Shuffle job..."))
-	os.Create("./SHUFFLEPART00000")
+	os.Create("./INTERPART00002")
 	custom_function := r.FormValue("custom")
 	if custom_function == "true"{
 		//[TODO]
@@ -106,7 +107,7 @@ func StartShuffle(w http.ResponseWriter, r *http.Request){
 	}
 	mod_value := len(globals.ShuffleNodeMetadata)
 
-	fd, err := os.Open("./MAPPART00000")
+	fd, err := os.Open("./INTERPART00001") //Read from mapper file
 	if err!=nil{
 		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
 		utils.SimpleFailStatus("Map outputs file open error!!",w)
@@ -150,7 +151,7 @@ func StartShuffle(w http.ResponseWriter, r *http.Request){
 }
 
 func ShuffleShare(w http.ResponseWriter, r *http.Request){
-  fd, err := os.OpenFile("./SHUFFLEPART00000", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+  fd, err := os.OpenFile("./SHUFFLEPART00002", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
   defer fd.Close()
   if err!=nil{
   	log.Println(color.Colorize(color.Red,"Error storing shared suffle kv pair"))
@@ -206,7 +207,7 @@ func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 	}
 	mod_value := len(globals.ShuffleNodeMetadata)
 
-	fd, err := os.Open("./MAPPART00000")
+	fd, err := os.Open("./INTERPART00001") //Read from map output
 	if err!=nil{
 		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
 		utils.SimpleFailStatus("Map outputs file open error!!",w)
@@ -226,7 +227,7 @@ func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 	com_put, _ := cmd.CombinedOutput()
 	hash_values := strings.Split(string(com_put),",")
 
-	fd, err = os.Open("./MAPPART00000")
+	fd, err = os.Open("./INTERPART00001")
 	if err!=nil{
 		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
 		utils.SimpleFailStatus("Map outputs file open error!!",w)

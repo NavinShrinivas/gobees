@@ -141,11 +141,13 @@ func newHandler(command_parse []string, command string) {
 		err = jobs.StartShuffle(custom_partition,partition_file_path)
 		if err!=nil{
 			log.Println(color.Colorize(color.Red,"Partition job failed :("))
+			return
 		}
+		err = jobs.StartReduce()
 	}
 }
 
-func commandParser(command string) {
+func commandProcessor(command string) {
 	command_parse := strings.Split(strings.Trim(command, "\n"), " ")
 	if command_parse[0] == "SHOW" && len(command_parse) >= 2 {
 		show_commands(command_parse)
@@ -180,7 +182,7 @@ func CommandListner() {
 			fmt.Println("An error occured while reading input. Please try again", err)
 			return
 		}
-		commandParser(command)
+		commandProcessor(command)
 		fmt.Print("master> ")
 	}
 }
