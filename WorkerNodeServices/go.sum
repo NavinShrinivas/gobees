@@ -1,2 +1,4 @@
 github.com/TwiN/go-color v1.2.0 h1:Z18GljqDd5aSmIBYwp2JKLH9H63fd79MzFdW79fDt2k=
 github.com/TwiN/go-color v1.2.0/go.mod h1:0QTVEPlu+AoCyTrho7bXbVkrCkVpdQr7YF7PYWEtSxM=
+github.com/theTardigrade/golang-hash v1.4.2 h1:Z3+wB1KRM5nt6zdI+90Dh7lEJE5oJ2jW5c3jX/goPfo=
+github.com/theTardigrade/golang-hash v1.4.2/go.mod h1:/H6EhVuFbQdVSmBiFrGDI7uyOE6u5nFv9MiOTZGM8io=

@@ -133,7 +133,15 @@ func newHandler(command_parse []string, command string) {
 			log.Println(color.Colorize(color.Red, "Map job failed"))
 			return
 		}
-		//If no error then continue to shuffle job
+		partition_file_path, ok := command_vars["PARTITION"]
+		custom_partition := true
+		if !ok {
+			custom_partition = false
+		}
+		err = jobs.StartShuffle(custom_partition,partition_file_path)
+		if err!=nil{
+			log.Println(color.Colorize(color.Red,"Partition job failed :("))
+		}
 	}
 }
 

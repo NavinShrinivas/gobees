@@ -21,6 +21,8 @@ func mainHttpHandler() {
 	http.HandleFunc("/", home.MainHome)
 	http.HandleFunc("/storefile", data.StoreFile)
 	http.HandleFunc("/mapjob", jobs.MapJob)
+	http.HandleFunc("/startshuffle",jobs.StartShuffle)
+	http.HandleFunc("/shuffleshare",jobs.ShuffleShare)
 	// http.HandleFunc("/nodedeath", node.MainNodeBirth)
 	master_node_url := globals.Ip + ":" + globals.Port
 	log.Fatal(http.ListenAndServe(master_node_url, nil))
@@ -35,6 +37,9 @@ func main() {
 	flag.StringVar(&globals.Port, "port", "3002", "Port worker node listens to")
 	flag.StringVar(&globals.Ip, "ip", "0.0.0.0", "IP addr of worker node in same network as Master")
 	flag.Parse()
+	if globals.MasterUrl[len(globals.MasterUrl)-1] != '/'{
+		globals.MasterUrl += "/"
+	}
 
 	//Checking if given port is free
 	ln, err := net.Listen("tcp", ":"+globals.Port)

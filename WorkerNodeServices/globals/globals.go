@@ -4,3 +4,9 @@ package globals
 var MasterUrl string
 var Port string
 var Ip string
+
+type WorkerNode struct {
+	Ip_addr string `json:"ip_addr"`
+	Port    string `json:"port"`
+}
+var ShuffleNodeMetadata []WorkerNode

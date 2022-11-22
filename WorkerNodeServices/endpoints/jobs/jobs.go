@@ -1,18 +1,26 @@
 package jobs
 
 import (
+	"WorkerGobees/globals"
 	"WorkerGobees/utils"
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 
 	"github.com/TwiN/go-color"
+	hash "github.com/theTardigrade/golang-hash"
 )
 
 func MapJob(w http.ResponseWriter, r *http.Request) {
 	os.Remove("./MAPPART00000")
+	os.Remove("./SHUFFLEPART00000")
 	log.Println(color.Colorize(color.Yellow, "[ENDPOINT] Reciving a Map job..."))
 
 	file, handler, err := r.FormFile("MapperFile")
@@ -76,4 +84,194 @@ func MapJob(w http.ResponseWriter, r *http.Request) {
 	log.Println(color.Colorize(color.Green, "Succesfully completed assigned map task"))
 	os.Remove("./" + handler.Filename)
 	utils.SimpleSuccesssStatus("Finished map taks!", w)
+}
+
+
+func StartShuffle(w http.ResponseWriter, r *http.Request){
+
+	log.Println(color.Colorize(color.Yellow, "[ENDPOINT] Reciving a Shuffle job..."))
+	os.Create("./SHUFFLEPART00000")
+	custom_function := r.FormValue("custom")
+	if custom_function == "true"{
+		//[TODO]
+		customShuffleFunction(w,r)
+	  return
+	}
+	NodeMetaData := r.FormValue("NodeInfo")
+	err := json.Unmarshal([]byte(NodeMetaData),&globals.ShuffleNodeMetadata)
+	if err!=nil{
+		log.Println(color.Colorize(color.Red, "Error getting Node info from Master node for shuffle taks "))
+		utils.SimpleFailStatus("Node Info Error",w)
+		return
+	}
+	mod_value := len(globals.ShuffleNodeMetadata)
+
+	fd, err := os.Open("./MAPPART00000")
+	if err!=nil{
+		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
+		utils.SimpleFailStatus("Map outputs file open error!!",w)
+		return
+	}
+  scanner := bufio.NewScanner(fd)
+	for scanner.Scan(){
+		line := string(scanner.Bytes())
+		line_split := strings.Split(line,",")
+		key := line_split[0]
+		key_hash := hash.UintString(key)
+		to_node := uint(key_hash)%uint(mod_value)
+		line += "\n"
+		to_node_url := "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port + "/shuffleshare"
+		body_streamer := bytes.NewReader([]byte(line))
+		res, err := http.Post(to_node_url,"text/plain",body_streamer)
+		if err!=nil{
+			log.Println(color.Colorize(color.Red,"Error on network interactions during shuffle"))
+			utils.SimpleFailStatus("Error network transffer during shuffle",w)
+			return
+		}
+		res_body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var res_body_obj map[string]interface{}
+		err = json.Unmarshal(res_body, &res_body_obj)
+		if err != nil {
+			log.Fatal(color.Colorize(color.Red, "Something went wrong reading reponse from other worker node"))
+			utils.SimpleFailStatus("Error network transffer during shuffle",w)
+			return
+		}
+		if res_body_obj["status"] == false {
+			log.Fatal(color.Colorize(color.Red, "Something went wrong on to node during shuffle"))
+			utils.SimpleFailStatus("Error network transffer during shuffle",w)
+			return
+		}
+	}
+	utils.SimpleSuccesssStatus("",w)
+	return
+}
+
+func ShuffleShare(w http.ResponseWriter, r *http.Request){
+  fd, err := os.OpenFile("./SHUFFLEPART00000", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+  defer fd.Close()
+  if err!=nil{
+  	log.Println(color.Colorize(color.Red,"Error storing shared suffle kv pair"))
+  	utils.SimpleFailStatus("Error storing kv pair",w)
+  	return
+  }
+	res_body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+  	log.Println(color.Colorize(color.Red,"Error reading shared suffle kv pair"))
+  	utils.SimpleFailStatus("Error reading shared kv pair",w)
+  	return
+	}
+  fd.WriteString(string(res_body))
+  utils.SimpleSuccesssStatus("",w)
+  return
+}
+
+
+
+func customShuffleFunction(w http.ResponseWriter,r *http.Request){
+	file, handler, err := r.FormFile("ShuffleFile")
+	if err != nil {
+		log.Println(color.Colorize(color.Red, "Error recieving custom shuffle file, please check."))
+		utils.SimpleFailStatus("Failed storing file in worker for shuffle proc", w)
+		return
+	}
+
+	fileBytes, err := ioutil.ReadAll(file)
+
+	new_fd, err := os.Create("./" + handler.Filename)
+	os.Chmod("./"+handler.Filename, 0777)
+	if err != nil {
+		log.Println(err)
+		utils.SimpleFailStatus("Failed storing file in wokrker", w)
+		return
+	}
+
+	_, err = new_fd.Write(fileBytes)
+	if err != nil {
+		log.Println(color.Colorize(color.Red, "Error storing file!"))
+		utils.SimpleFailStatus("Failed storing file in wokrker", w)
+		return
+	}
+	log.Println(color.Colorize(color.Green, "Recieved Shuffle file!"))
+	new_fd.Close()
+	file.Close()
+	NodeMetaData := r.FormValue("NodeInfo")
+	err = json.Unmarshal([]byte(NodeMetaData),&globals.ShuffleNodeMetadata)
+	if err!=nil{
+		log.Println(color.Colorize(color.Red, "Error getting Node info from Master node for shuffle taks "))
+		utils.SimpleFailStatus("Node Info Error",w)
+		return
+	}
+	mod_value := len(globals.ShuffleNodeMetadata)
+
+	fd, err := os.Open("./MAPPART00000")
+	if err!=nil{
+		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
+		utils.SimpleFailStatus("Map outputs file open error!!",w)
+		return
+	}
+  scanner := bufio.NewScanner(fd)
+	cmd := exec.Command("go","run","./"+handler.Filename)
+	stdinPipe, _ := cmd.StdinPipe()
+	for scanner.Scan(){
+		line := string(scanner.Bytes())
+		line_split := strings.Split(line,",")
+		key := line_split[0]+"\n"
+		stdinPipe.Write([]byte(key))
+	}
+	stdinPipe.Close()
+	fd.Close()
+	com_put, _ := cmd.CombinedOutput()
+	hash_values := strings.Split(string(com_put),",")
+
+	fd, err = os.Open("./MAPPART00000")
+	if err!=nil{
+		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
+		utils.SimpleFailStatus("Map outputs file open error!!",w)
+		return
+	}
+  scanner = bufio.NewScanner(fd)
+  kv_pair := 0
+  for scanner.Scan(){
+  	line := scanner.Text()
+		key_hash := hash_values[kv_pair]
+		kv_pair+=1
+		key_hash_int, err := strconv.Atoi(strings.Trim(key_hash,"\n"))
+		if err!=nil{
+			log.Println(color.Colorize(color.Red,"Invalid Streaming shuffle function"))
+			utils.SimpleFailStatus("INVALID SHUFFLE FUNCTION",w)
+			return
+		}
+		to_node := uint(key_hash_int)%uint(mod_value)
+		line += "\n"
+		to_node_url := "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port + "/shuffleshare"
+		body_streamer := bytes.NewReader([]byte(line))
+		res, err := http.Post(to_node_url,"text/plain",body_streamer)
+		if err!=nil{
+			log.Println(color.Colorize(color.Red,"Error on network interactions during shuffle"))
+			utils.SimpleFailStatus("Error network transffer during shuffle",w)
+			return
+		}
+		res_body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var res_body_obj map[string]interface{}
+		err = json.Unmarshal(res_body, &res_body_obj)
+		if err != nil {
+			log.Fatal(color.Colorize(color.Red, "Something went wrong reading reponse from other worker node"))
+			utils.SimpleFailStatus("Error network transffer during shuffle",w)
+			return
+		}
+		if res_body_obj["status"] == false {
+			log.Fatal(color.Colorize(color.Red, "Something went wrong on to node during shuffle"))
+			utils.SimpleFailStatus("Error network transffer during shuffle",w)
+			return
+		}
+  }
+  os.Remove("./"+handler.Filename)
+	utils.SimpleSuccesssStatus("",w)
+	return
 }
