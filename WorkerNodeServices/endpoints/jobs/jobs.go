@@ -148,12 +148,18 @@ func StartShuffle(w http.ResponseWriter, r *http.Request){
 			return
 		}
 	}
+  err = InMemSorter("./INTERPART00002")
+  if err!=nil{
+  	log.Println(color.Colorize(color.Red, "Failed sorting file"))
+  	utils.SimpleFailStatus("Failed sorting file from shuffling stage", w)
+  	return 
+  }
 	utils.SimpleSuccesssStatus("",w)
 	return
 }
 
 func ShuffleShare(w http.ResponseWriter, r *http.Request){
-  fd, err := os.OpenFile("./SHUFFLEPART00002", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+  fd, err := os.OpenFile("./INTERPART00002", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
   defer fd.Close()
   if err!=nil{
   	log.Println(color.Colorize(color.Red,"Error storing shared suffle kv pair"))
@@ -295,14 +301,22 @@ func (a InMemFile) Len() int{
 	return (len(a))
 }
 
-func (a InMemFile) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a InMemFile) Swap(i, j int) { 
+	temp := a[j]
+	a[j] = a[i]
+	a[i] = temp
+}
 
 func (a InMemFile) Key(i int) string {
 	return a[i].Key
 }
 
 func (a InMemFile) Less(i, j int) bool {
-	if a[i].Key <= a[j].Key{
+	//Undersading of this interface function comes from : 
+	//https://github.com/twotwotwo/sorts/blob/master/radixsort.go
+	//Line 106, tells us where this function is used and what's expect of it
+	//POWER OF OPEN SOURCE!
+	if a[i].Key < a[j].Key{
 		return true
 	}
 	return false
@@ -318,6 +332,9 @@ func InMemSorter(file_name string) error{
 	var file InMemFile
 	for _,v := range file_array{
 		kv_pair := strings.Split(v, ",")
+		if len(kv_pair) < 2{
+			continue
+		}
 		new_record :=  record{
 			Key : kv_pair[0],
 			Value : kv_pair[1],
@@ -325,7 +342,6 @@ func InMemSorter(file_name string) error{
 		file = append(file, new_record)
 	}
 	sorts.ByString(file)
-	fmt.Println(file)
 	output_string := ""
 	for _,v := range file{
 		temp := v.Key+","+v.Value+"\n"
