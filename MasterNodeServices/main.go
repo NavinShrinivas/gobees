@@ -27,7 +27,6 @@ func NetworkEndpoints() {
 	master_node_url := "0.0.0.0:" + globals.ServerPort
 	log.Fatal(http.ListenAndServe(master_node_url, nil))
 }
-
 func MasterStartupSequence() {
 	//Some gloabls inits :
 	globals.MainWg = new(sync.WaitGroup)

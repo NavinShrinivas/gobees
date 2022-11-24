@@ -17,7 +17,6 @@ import (
 	"github.com/TwiN/go-color"
 	hash "github.com/theTardigrade/golang-hash"
 	"github.com/twotwotwo/sorts" //Gives fast as hek in memory Quick Sort impl
-	"fmt"
 )
 
 func MapJob(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +177,6 @@ func ShuffleShare(w http.ResponseWriter, r *http.Request){
 }
 
 
-
 func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 	file, handler, err := r.FormFile("ShuffleFile")
 	if err != nil {
@@ -186,9 +184,7 @@ func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 		utils.SimpleFailStatus("Failed storing file in worker for shuffle proc", w)
 		return
 	}
-
 	fileBytes, err := ioutil.ReadAll(file)
-
 	new_fd, err := os.Create("./" + handler.Filename)
 	os.Chmod("./"+handler.Filename, 0777)
 	if err != nil {
@@ -196,7 +192,6 @@ func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 		utils.SimpleFailStatus("Failed storing file in wokrker", w)
 		return
 	}
-
 	_, err = new_fd.Write(fileBytes)
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Error storing file!"))
@@ -214,7 +209,6 @@ func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 		return
 	}
 	mod_value := len(globals.ShuffleNodeMetadata)
-
 	fd, err := os.Open("./INTERPART00001") //Read from map output
 	if err!=nil{
 		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
@@ -234,7 +228,6 @@ func customShuffleFunction(w http.ResponseWriter,r *http.Request){
 	fd.Close()
 	com_put, _ := cmd.CombinedOutput()
 	hash_values := strings.Split(string(com_put),",")
-
 	fd, err = os.Open("./INTERPART00001")
 	if err!=nil{
 		log.Println(color.Colorize(color.Red,"Error opening Map output file!!!"))
@@ -312,9 +305,9 @@ func (a InMemFile) Key(i int) string {
 }
 
 func (a InMemFile) Less(i, j int) bool {
-	//Undersading of this interface function comes from : 
+	//Understanding of this interface function comes from : 
 	//https://github.com/twotwotwo/sorts/blob/master/radixsort.go
-	//Line 106, tells us where this function is used and what's expect of it
+	//Line 106, tells us where this function is used and what's expected of it
 	//POWER OF OPEN SOURCE!
 	if a[i].Key < a[j].Key{
 		return true
@@ -349,4 +342,71 @@ func InMemSorter(file_name string) error{
 	}
 	os.WriteFile("./INTERPART00003", []byte(output_string), 0777)
 	return nil
+
+}
+
+func ReduceJob(w http.ResponseWriter, r *http.Request) {
+	log.Println(color.Colorize(color.Yellow, "[ENDPOINT] Reciving a Reduce job..."))
+
+	file, handler, err := r.FormFile("ReducerFile")
+	if err != nil {
+		log.Println(color.Colorize(color.Red, "Error recieving file, please check."))
+		utils.SimpleFailStatus("Failed storing file in worker for reduce proc", w)
+		return
+	}
+	reduce_args := r.FormValue("ReducerArgs")
+	output_file_name := r.FormValue("OutputFileSS")
+
+	fileBytes, err := ioutil.ReadAll(file)
+
+	//[TODO] Later on we should be able to dynamically change path on worker nodes as well
+	new_fd, err := os.Create("./" + handler.Filename)
+	os.Chmod("./"+handler.Filename, 0777)
+	if err != nil {
+		log.Println(err)
+		utils.SimpleFailStatus("Failed storing file in wokrker", w)
+		return
+	}
+
+	_, err = new_fd.Write(fileBytes)
+	if err != nil {
+		log.Println(color.Colorize(color.Red, "Error storing file!"))
+		utils.SimpleFailStatus("Failed storing file in wokrker", w)
+		return
+	}
+	log.Println(color.Colorize(color.Green, "Recieved reduce file!"))
+	new_fd.Close()
+	file.Close()
+	log.Println(color.Colorize(color.Yellow, "Running Reduce job"))
+	cmd := exec.Command("python3", handler.Filename, reduce_args)
+	stdinPipe, err := cmd.StdinPipe()
+
+	go func() {
+		defer stdinPipe.Close()
+		map_input_file, err := os.ReadFile("./INTERPART00003")
+		if err != nil {
+			log.Println(err)
+			utils.SimpleFailStatus("Error reading split File", w)
+			return
+		}
+		stdinPipe.Write(map_input_file)
+	}()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(color.Colorize(color.Red,"error running mapper file"))
+	  os.WriteFile("./REDUCEERROR", out, 0777)
+	  log.Println(string(out))
+		utils.SimpleFailStatus(string(out), w)
+		return
+	}
+	err = os.WriteFile("./SS/"+output_file_name, out, 0777)
+	if err != nil {
+		log.Println(err)
+		log.Println(color.Colorize(color.Red, "Error storing reduce output"))
+		return
+	}
+	log.Println(color.Colorize(color.Green, "Succesfully completed assigned reduce task"))
+	os.Remove("./" + handler.Filename)
+	utils.SimpleSuccesssStatus("Finished reduce taks!", w)
 }

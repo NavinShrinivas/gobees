@@ -1,0 +1,20 @@
+go 1.19
+
+use (
+	./MasterNodeServices
+	./MasterNodeServices/configuration
+	./MasterNodeServices/endpoints/data
+	./MasterNodeServices/endpoints/home
+	./MasterNodeServices/endpoints/jobs
+	./MasterNodeServices/endpoints/node
+	./MasterNodeServices/globals
+	./MasterNodeServices/shell
+	./MasterNodeServices/utils
+	./WorkerNodeServices
+	./WorkerNodeServices/endpoints/data
+	./WorkerNodeServices/endpoints/home
+	./WorkerNodeServices/endpoints/jobs
+	./WorkerNodeServices/endpoints/lifestatus
+	./WorkerNodeServices/globals
+	./WorkerNodeServices/utils
+)

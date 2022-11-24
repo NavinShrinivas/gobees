@@ -143,7 +143,11 @@ func newHandler(command_parse []string, command string) {
 			log.Println(color.Colorize(color.Red,"Partition job failed :("))
 			return
 		}
-		// err = jobs.StartReduce()
+		err = jobs.StartReduce(command_vars["reducer"], command_vars["OUT"])
+		if err!=nil{
+			log.Println(color.Colorize(color.Red,"Reduce job failed :("))
+			return
+		}
 	}
 }
 
