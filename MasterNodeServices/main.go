@@ -31,7 +31,6 @@ func MasterStartupSequence() {
 	//Some gloabls inits :
 	globals.MainWg = new(sync.WaitGroup)
 	globals.NewCluster = false
-
 	//--------------------
 	//Ressting cluster settings :
 	fmt.Print(color.Colorize(color.Red, "Resetting previous cluster data [Y]/n : "))
