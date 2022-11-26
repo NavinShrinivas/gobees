@@ -48,13 +48,21 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 	fd.Close()
 	number_of_split := len(globals.WorkerNodesMetadata)
 	file_record.Splits = int32(number_of_split)
+	if number_of_split == 0{
+		log.Println(color.Colorize(color.Red, "There are not worker node to store data in!"))
+		return errors.New("No Worker nodes!")
+	}
 	delimiter_per_split := int32(delimiter_count / number_of_split)
+	if delimiter_per_split == 0{
+		delimiter_per_split = 1 //Minimum amount, but now we need to handle empty splits
+	}
 	//[MUST]After we have the above three metrics in theory we can parellelise the code
 
 	fd, err = os.Open(file_path)
 	r = bufio.NewReader(fd)
 	b = make([]byte, 1)
-	for i := 1; i <= number_of_split; i++ {
+	var i int
+	for i = 1; i <= number_of_split; i++ {
 		number_of_delims_in_split := 0
 		var temp_split_content []byte
 		for {
@@ -82,6 +90,23 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 			return err
 		}
 		f_split.Write(temp_split_content)
+		f_split.Close()
+		temp_node := "http://" + globals.WorkerNodesMetadata[i-1].Ip_addr + ":" + globals.WorkerNodesMetadata[i-1].Port + "/storefile"
+		err = UploadData("./temp_splits/"+filepath.Base(file_path)+"_PART00000", temp_node, file_path)
+		if err != nil {
+			log.Println(color.Colorize(color.Red, "Error uploading file"))
+			return err
+		}
+		file_record.Nodes = append(file_record.Nodes, globals.WorkerNodesMetadata[i-1])
+	}
+
+	//Below for loop only to handle empty files, if we have not send a file to every workernode but have reached end of file
+	for i = i;i<=number_of_split; i++{
+		f_split, err := os.Create("./temp_splits/" + filepath.Base(file_path) + "_PART00000")
+		if err != nil {
+			log.Println(color.Colorize(color.Red, "Error creatring split"))
+			return err
+		}
 		f_split.Close()
 		temp_node := "http://" + globals.WorkerNodesMetadata[i-1].Ip_addr + ":" + globals.WorkerNodesMetadata[i-1].Port + "/storefile"
 		err = UploadData("./temp_splits/"+filepath.Base(file_path)+"_PART00000", temp_node, file_path)
