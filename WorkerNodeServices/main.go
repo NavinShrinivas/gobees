@@ -20,6 +20,8 @@ import (
 func mainHttpHandler() {
 	http.HandleFunc("/", home.MainHome)
 	http.HandleFunc("/storefile", data.StoreFile)
+	http.HandleFunc("/renamefile", data.RenameFile)
+	http.HandleFunc("/deletefile", data.DeleteFile)
 	http.HandleFunc("/mapjob", jobs.MapJob)
 	http.HandleFunc("/startshuffle", jobs.StartShuffle)
 	http.HandleFunc("/shuffleshare", jobs.ShuffleShare)

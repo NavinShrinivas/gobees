@@ -60,7 +60,7 @@ func SimpleInvalidPath(res string, w http.ResponseWriter) {
 	return
 }
 
-func ExistSequence() {
+func ExitSequence() {
 	fd1, _ := os.Create("./NodeMeta.json")
 	byte_buffer1, _ := json.Marshal(globals.WorkerNodesMetadata)
 	fd1.Write(byte_buffer1)

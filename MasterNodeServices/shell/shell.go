@@ -18,7 +18,25 @@ import (
 
 var reader *bufio.Reader
 
+func clearScreen() {
+	fmt.Print("\033[H\033[2J")
+}
+
+func help() {
+	fmt.Println("Commands : ")
+	fmt.Println("SHOW <config/nodes/files/jobs>         : Show config/nodes/files/jobs")
+	fmt.Println("PUT <local_file_path> [delimiter]      : Upload file to shared storage")
+	fmt.Println("RENAME <old_file_name> <new_file_name> : Rename file in shared storage")
+	fmt.Println("DELETE <file_name>                     : Delete file from shared storage")
+	fmt.Println("EXIT                                   : Exit the shell")
+	fmt.Println("HELP                                   : Show this help")
+}
+
 func show_commands(command_parse []string) {
+	if len(command_parse) < 2 {
+		fmt.Println(color.Colorize(color.Yellow, "Syntax : SHOW <config/nodes/files/jobs>"))
+		return
+	}
 	command_parse[1] = strings.ToUpper(command_parse[1])
 	if command_parse[1] == "CONFIG" {
 		fmt.Println(globals.Config_obj)
@@ -34,7 +52,8 @@ func show_commands(command_parse []string) {
 	}
 	if command_parse[1] == "FILES" {
 		for w, v := range globals.FileMetadata {
-			fmt.Println(w, ":", v.File_name, "| splits : ", v.Splits)
+			space := 20 - len(v.File_name)
+			fmt.Println(w+1, ":", v.File_name, strings.Repeat(" ", space), "| splits : ", v.Splits)
 		}
 		return
 	}
@@ -43,7 +62,6 @@ func show_commands(command_parse []string) {
 		return
 	}
 	fmt.Println("Invalid SHOW command")
-	return
 }
 
 func handleFiles(command_parse []string) {
@@ -74,13 +92,66 @@ func handleFiles(command_parse []string) {
 		}
 		err = data.SplitAndUploadFile(local_file_path, delimiter)
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Couldln't upload file successfully :,("))
+			log.Println(color.Colorize(color.Red, "Couldn't upload file successfully :("))
 			return
 			//As for deliberable we do not have to go back and handle clearing part files, but that a good [TODO]
 		}
 		log.Println(color.Colorize(color.Green, "File upload complete :)"))
 		return
 	}
+}
+
+func renameFile(command_parse []string) {
+	if len(command_parse) < 3 {
+		log.Println(color.Colorize(color.Yellow, "Syntax : RENAME <old_file_name> <new_file_name>"))
+		return
+	}
+	old_name := command_parse[1]
+	new_name := command_parse[2]
+
+	for i, v := range globals.FileMetadata {
+		if v.File_name == old_name {
+			err := data.RenameFile(old_name, new_name)
+			if err != nil {
+				log.Println(color.Colorize(color.Red, "Could not rename file!"))
+				return
+			}
+			log.Println(color.Colorize(color.Green, "File renamed successfully on nodes!"))
+
+			globals.FileMetadata = append(globals.FileMetadata[:i], globals.FileMetadata[i+1:]...)
+			v.File_name = new_name
+			globals.FileMetadata = append(globals.FileMetadata, v)
+
+			log.Println(color.Colorize(color.Green, "File metadata updated successfully!"))
+			return
+		}
+	}
+	log.Println(color.Colorize(color.Red, "File does not exist!"))
+}
+
+func deleteFile(command_parse []string) {
+	if len(command_parse) < 2 {
+		log.Println(color.Colorize(color.Yellow, "Syntax : DELETE <file_name>"))
+		return
+	}
+	file_name := command_parse[1]
+
+	for i, v := range globals.FileMetadata {
+		if v.File_name == file_name {
+			err := data.DeleteFile(file_name)
+			if err != nil {
+				log.Println(color.Colorize(color.Red, "Could not delete file!"))
+				return
+			}
+			log.Println(color.Colorize(color.Green, "File deleted successfully on nodes!"))
+
+			globals.FileMetadata = append(globals.FileMetadata[:i], globals.FileMetadata[i+1:]...)
+
+			log.Println(color.Colorize(color.Green, "File metadata updated successfully!"))
+			return
+		}
+	}
+	log.Println(color.Colorize(color.Red, "File does not exist!"))
 }
 
 func NewcommandParsing(command string) (map[string]string, error) {
@@ -156,8 +227,15 @@ func newHandler(command_parse []string, command string) {
 func commandProcessor(command string) {
 	command_parse := strings.Split(strings.Trim(strings.Trim(command, "\n"), "\r"), " ")
 	command_parse[0] = strings.ToUpper(command_parse[0])
-
-	if command_parse[0] == "SHOW" && len(command_parse) >= 2 {
+	if command_parse[0] == "CLEAR" {
+		clearScreen()
+		return
+	}
+	if command_parse[0] == "HELP" {
+		help()
+		return
+	}
+	if command_parse[0] == "SHOW" {
 		show_commands(command_parse)
 		return
 	}
@@ -166,11 +244,15 @@ func commandProcessor(command string) {
 		return
 	}
 	if command_parse[0] == "RENAME" {
-		// renameFile(command_parse)
+		renameFile(command_parse)
+		return
+	}
+	if command_parse[0] == "DELETE" {
+		deleteFile(command_parse)
 		return
 	}
 	if command_parse[0] == "EXIT" {
-		utils.ExistSequence()
+		utils.ExitSequence()
 		//There is no coming back from exit sequence
 	}
 	if command_parse[0] == "NEW" {

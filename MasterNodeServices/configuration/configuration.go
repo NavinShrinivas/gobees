@@ -24,7 +24,7 @@ func ConfigurationMain() error {
 	}
 	err = json.Unmarshal(config_raw_string, &globals.Config_obj)
 	if err != nil {
-		return errors.New("Error parsing configuration file :(.")
+		return errors.New("Error parsing configuration file :(")
 	}
 	if globals.Debug_flag {
 		fmt.Println("debug print : ", globals.Config_obj["replication-rate"])
