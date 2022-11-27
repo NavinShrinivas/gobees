@@ -124,9 +124,14 @@ func StartShuffle(w http.ResponseWriter, r *http.Request){
 		line += "\n"
 		var base_url_of_to_node string
 		if globals.ShuffleNodeMetadata[to_node].Ip_addr == "0.0.0.0"{
+			//If they were part of local cluster then this is activated
 			master_url_split := strings.Split(globals.MasterUrl, ":") 
 			base_url_of_to_node = "http:"+master_url_split[1]+":"+globals.ShuffleNodeMetadata[to_node].Port
+		}else if globals.ShuffleNodeMetadata[to_node].Ip_addr == globals.Ip{
+			//If they were part of global cluster but for current node its local
+			base_url_of_to_node = "http://" + "0.0.0.0" + ":" + globals.ShuffleNodeMetadata[to_node].Port 
 		}else{
+			//If completetly global
 			base_url_of_to_node = "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port 
 		}
 		to_node_url := base_url_of_to_node + "/shuffleshare"
