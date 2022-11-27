@@ -124,11 +124,13 @@ func StartShuffle(w http.ResponseWriter, r *http.Request){
 		line += "\n"
 		var base_url_of_to_node string
 		if globals.ShuffleNodeMetadata[to_node].Ip_addr == "0.0.0.0"{
-			base_url_of_to_node = globals.MasterUrl
+			master_url_split := strings.Split(globals.MasterUrl, ":") 
+			base_url_of_to_node = "http://"+master_url_split[1]+":"+globals.ShuffleNodeMetadata[to_node].Port
 		}else{
 			base_url_of_to_node = "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port 
 		}
 		to_node_url := base_url_of_to_node + "/shuffleshare"
+		log.Println(to_node_url)
 		body_streamer := bytes.NewReader([]byte(line))
 		res, err := http.Post(to_node_url,"text/plain",body_streamer)
 		if err!=nil{
