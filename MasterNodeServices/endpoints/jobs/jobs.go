@@ -41,7 +41,13 @@ func SendMapJobs(mapper_command string, input_file string) error {
 
 	local_wg := new(sync.WaitGroup)
 	err_chan := make(chan error, 1000)
-	for _, v := range globals.WorkerNodesMetadata {
+	var nodes_with_split []globals.WorkerNode
+	for _,v := range globals.FileMetadata{
+		if v.File_name == input_file{
+			nodes_with_split = v.Nodes
+		}
+	}
+	for _, v := range nodes_with_split{
 		temp_node := "http://" + v.Ip_addr + ":" + v.Port + "/mapjob"
 		local_wg.Add(1)
 		go NodeMapJob(body, temp_node, local_wg, err_chan, formtype)
