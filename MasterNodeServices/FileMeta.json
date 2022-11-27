@@ -1,1 +1,1 @@
-[{"File_name":"web-Subset.txt","Splits":2,"Nodes":[{"ip_addr":"0.0.0.0","port":"3003"},{"ip_addr":"0.0.0.0","port":"3002"}]}]
+[{"File_name":"a.txt","Splits":2,"Nodes":[{"ip_addr":"0.0.0.0","port":"3003"},{"ip_addr":"0.0.0.0","port":"3002"}]},{"File_name":"test.txt","Splits":2,"Nodes":[{"ip_addr":"0.0.0.0","port":"3003"},{"ip_addr":"0.0.0.0","port":"3002"}]}]

@@ -49,12 +49,12 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 	fd.Close()
 	number_of_split := len(globals.WorkerNodesMetadata)
 	file_record.Splits = int32(number_of_split)
-	if number_of_split == 0{
+	if number_of_split == 0 {
 		log.Println(color.Colorize(color.Red, "There are not worker node to store data in!"))
 		return errors.New("No Worker nodes!")
 	}
 	delimiter_per_split := int32(delimiter_count / number_of_split)
-	if delimiter_per_split == 0{
+	if delimiter_per_split == 0 {
 		delimiter_per_split = 1 //Minimum amount, but now we need to handle empty splits
 	}
 	//[MUST]After we have the above three metrics in theory we can parellelise the code
@@ -102,7 +102,7 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 	}
 
 	//Below for loop only to handle empty files, if we have not send a file to every workernode but have reached end of file
-	for i = i;i<=number_of_split; i++{
+	for i = i; i <= number_of_split; i++ {
 		f_split, err := os.Create("./temp_splits/" + filepath.Base(file_path) + "_PART00000")
 		if err != nil {
 			log.Println(color.Colorize(color.Red, "Error creatring split"))
@@ -118,6 +118,7 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 		file_record.Nodes = append(file_record.Nodes, globals.WorkerNodesMetadata[i-1])
 	}
 	globals.FileMetadata = append(globals.FileMetadata, file_record) //Storing to file metadata only if everyhting went fine!
+	os.RemoveAll("./temp_splits")
 	return nil
 }
 
@@ -204,5 +205,37 @@ func FetchAndMergeFile(v globals.WorkerNode, to_file_path string, ss_file string
 	f.Write(part_data)
 	f.Close()
 	log.Println(color.Colorize(color.Green, "Succefully recived split from : "+temp_node))
+	return nil
+}
+
+func RenameFile(oldpath string, newpath string) error {
+	for i := 0; i < len(globals.WorkerNodesMetadata); i++ {
+		worker := globals.WorkerNodesMetadata[i]
+		url := "http://" + worker.Ip_addr + ":" + worker.Port + "/renamefile"
+		data := map[string]string{"oldpath": oldpath, "newpath": newpath}
+		jsonValue, _ := json.Marshal(data)
+		response, err := http.Post(url, "application/json", bytes.NewBuffer(jsonValue))
+		if err != nil {
+			log.Println(color.Colorize(color.Red, "Error while renaming file in worker node"))
+			return err
+		}
+		defer response.Body.Close()
+	}
+	return nil
+}
+
+func DeleteFile(file_path string) error {
+	for i := 0; i < len(globals.WorkerNodesMetadata); i++ {
+		worker := globals.WorkerNodesMetadata[i]
+		url := "http://" + worker.Ip_addr + ":" + worker.Port + "/deletefile"
+		data := map[string]string{"filepath": file_path}
+		jsonValue, _ := json.Marshal(data)
+		response, err := http.Post(url, "application/json", bytes.NewBuffer(jsonValue))
+		if err != nil {
+			log.Println(color.Colorize(color.Red, "Error while deleting file in worker node"))
+			return err
+		}
+		defer response.Body.Close()
+	}
 	return nil
 }
