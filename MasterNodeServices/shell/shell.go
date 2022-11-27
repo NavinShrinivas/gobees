@@ -19,6 +19,7 @@ import (
 var reader *bufio.Reader
 
 func show_commands(command_parse []string) {
+	command_parse[1] = strings.ToUpper(command_parse[1])
 	if command_parse[1] == "CONFIG" {
 		fmt.Println(globals.Config_obj)
 		return
@@ -41,7 +42,7 @@ func show_commands(command_parse []string) {
 		fmt.Println("Past job history : ")
 		return
 	}
-	fmt.Println("Invalid command")
+	fmt.Println("Invalid SHOW command")
 	return
 }
 
@@ -49,7 +50,8 @@ func handleFiles(command_parse []string) {
 	if command_parse[0] == "PUT" {
 		log.Println(color.Colorize(color.Yellow, "Uploading file..."))
 		//Upload files
-		local_file_path := strings.Trim(command_parse[1], "\n")
+		local_file_path := command_parse[1]
+
 		//Check if file exists
 		_, err := os.Stat(local_file_path)
 
@@ -138,27 +140,33 @@ func newHandler(command_parse []string, command string) {
 		if !ok {
 			custom_partition = false
 		}
-		err = jobs.StartShuffle(custom_partition,partition_file_path)
-		if err!=nil{
-			log.Println(color.Colorize(color.Red,"Partition job failed :("))
+		err = jobs.StartShuffle(custom_partition, partition_file_path)
+		if err != nil {
+			log.Println(color.Colorize(color.Red, "Partition job failed :("))
 			return
 		}
 		err = jobs.StartReduce(command_vars["reducer"], command_vars["OUT"])
-		if err!=nil{
-			log.Println(color.Colorize(color.Red,"Reduce job failed :("))
+		if err != nil {
+			log.Println(color.Colorize(color.Red, "Reduce job failed :("))
 			return
 		}
 	}
 }
 
 func commandProcessor(command string) {
-	command_parse := strings.Split(strings.Trim(command, "\n"), " ")
+	command_parse := strings.Split(strings.Trim(strings.Trim(command, "\n"), "\r"), " ")
+	command_parse[0] = strings.ToUpper(command_parse[0])
+
 	if command_parse[0] == "SHOW" && len(command_parse) >= 2 {
 		show_commands(command_parse)
 		return
 	}
 	if command_parse[0] == "PUT" {
 		handleFiles(command_parse)
+		return
+	}
+	if command_parse[0] == "RENAME" {
+		// renameFile(command_parse)
 		return
 	}
 	if command_parse[0] == "EXIT" {
