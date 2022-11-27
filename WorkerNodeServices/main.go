@@ -24,6 +24,7 @@ func mainHttpHandler() {
 	http.HandleFunc("/startshuffle", jobs.StartShuffle)
 	http.HandleFunc("/shuffleshare", jobs.ShuffleShare)
 	http.HandleFunc("/reducejob", jobs.ReduceJob)
+	http.HandleFunc("/fetchfile", data.FetchFile)
 	// http.HandleFunc("/nodedeath", node.MainNodeBirth)
 	master_node_url := globals.Ip + ":" + globals.Port
 	log.Fatal(http.ListenAndServe(master_node_url, nil))

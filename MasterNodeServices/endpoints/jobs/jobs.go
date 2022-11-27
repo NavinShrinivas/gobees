@@ -204,7 +204,7 @@ func NodeShuffleJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_cha
 
 func StartReduce(reducer_command string, output_file string) error{
 	//Need to upload reducer file along with output file name
-	log.Println(color.Colorize(color.Yellow,"Starting Suffle Job"))
+	log.Println(color.Colorize(color.Yellow,"Starting Reducer Job"))
 
 	command_split := strings.Split(reducer_command, " ")
 	reducer_file_path := command_split[0]
@@ -240,7 +240,7 @@ func StartReduce(reducer_command string, output_file string) error{
 			//Meaning out map job passed!
 
 			//This way of adding meta from master node needs to be changed in the future
-			log.Println(color.Colorize(color.Green, "Shuffle Job completed Succesfully!"))
+			log.Println(color.Colorize(color.Green, "Reduce Job completed Succesfully!"))
 			mr_job_out_file_meta := globals.File{
 				File_name: output_file,
 				Splits: int32(len(globals.WorkerNodesMetadata)),
@@ -296,3 +296,5 @@ func NodeReduceJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan
 	//Outputs in SS after successful reduce stage should be the "OUT" file name
 	return
 }
+
+

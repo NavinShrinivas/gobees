@@ -13,6 +13,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"mime"
 
 	"path/filepath"
 
@@ -159,5 +160,49 @@ func UploadData(TempFilePath string, node string, fileName string) error {
 		return errors.New("Error from WorkerNode")
 	}
 	log.Println(color.Colorize(color.Green, "Done writing part file to : "+node))
+	return nil
+}
+
+type FileFetchRequest struct{
+	SS_file string `json:"SS_file"`
+}
+
+func FetchAndMergeFile(v globals.WorkerNode, to_file_path string, ss_file string) error{
+	// If the file doesn't exist, create it, or append to the file
+	f, err := os.OpenFile(to_file_path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+	if err != nil {
+    log.Println(color.Colorize(color.Red, "Error creating/opening files to write in local."))
+    return err
+	}
+	temp_node := "http://" + v.Ip_addr + ":" + v.Port + "/fetchfile"
+	request := FileFetchRequest{
+		SS_file: ss_file,
+	}
+	request_bytes, err := json.Marshal(request)
+	if err != nil {
+		log.Println(color.Colorize(color.Red, "Error Marshalling response on a fail status"))
+		return err
+	}
+	r, err := http.Post(temp_node, "application/json", bytes.NewBuffer(request_bytes))
+	if err!=nil{
+		log.Println(color.Colorize(color.Red, "Error sending fetch request to worker"))
+		return err
+	}
+	_, params, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	mr := multipart.NewReader(r.Body,params["boundary"])
+	//We let multipart form take care of the parts it wants to split into
+	//meaning we need to collect all part here and combine them
+	var part_data []byte
+	for part, err := mr.NextPart(); err == nil; part, err = mr.NextPart() {
+		value, _ := ioutil.ReadAll(part)
+		part_data = append(part_data, value...)
+	}
+	if err!=nil{
+		log.Println(color.Colorize(color.Red, "Error getting response from workernode when fetching files : "+temp_node))
+		return err
+	}
+	f.Write(part_data)
+	f.Close()
+	log.Println(color.Colorize(color.Green, "Succefully recived split from : "+temp_node))
 	return nil
 }

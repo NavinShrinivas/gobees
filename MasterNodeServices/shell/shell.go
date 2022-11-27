@@ -148,10 +148,23 @@ func newHandler(command_parse []string, command string) {
 			log.Println(color.Colorize(color.Red,"Reduce job failed :("))
 			return
 		}
+
+		//Below part is already done in reducer function
+		// //We need to update metadata about the new reducer output
+		// new_output_file_meta := globals.File{
+		// 	File_name: command_vars["IN"],
+		// }
+		// for _,v := range globals.FileMetadata{
+		// 	if v.File_name == command_vars["IN"]{
+		// 		new_output_file_meta.Nodes = v.Nodes
+		// 		new_output_file_meta.Splits = int32(len(v.Nodes))
+		// 	}
+		// }
 	}
 }
 
 func commandProcessor(command string) {
+	command = strings.Trim(command, "\r")
 	command_parse := strings.Split(strings.Trim(command, "\n"), " ")
 	if command_parse[0] == "SHOW" && len(command_parse) >= 2 {
 		show_commands(command_parse)
@@ -169,7 +182,42 @@ func commandProcessor(command string) {
 		newHandler(command_parse, command)
 		return
 	}
+	if command_parse[0] == "FETCH"{
+		fetchHandler(command_parse)
+		return
+	}
 	fmt.Println("Invalid command")
+}
+
+func fetchHandler(command_parse []string){
+		if len(command_parse) < 3{
+			log.Println(color.Colorize(color.Red, "Not enough arguments provided"))
+			return
+		}
+		ss_file_name := command_parse[1]
+		local_to_file_name := command_parse[2]
+		var all_nodes_with_split []globals.WorkerNode
+		for _,v := range globals.FileMetadata{
+			if v.File_name == ss_file_name{
+				all_nodes_with_split = v.Nodes
+			}
+		}
+		if len(all_nodes_with_split) == 0{
+			log.Println(color.Colorize(color.Red, "File with name does not exists in SS."))
+			return
+		}
+		//Need to make request to each node
+		//[WARNING] We SHOULD NOT PARELLELISE THIS PART, as we cant have multiple thread write to a single file
+		for _,v := range all_nodes_with_split{
+			err := data.FetchAndMergeFile(v, local_to_file_name, ss_file_name)
+			if err!=nil{
+				log.Println(color.Colorize(color.Red, "Error fetching files :("))
+				os.Remove(local_to_file_name)
+				return
+			}
+		}
+		log.Println(color.Colorize(color.Green, "Finished fetching file"))
+		return
 }
 
 func PrintToShell(str string) {
