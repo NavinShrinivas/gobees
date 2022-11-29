@@ -28,3 +28,6 @@ services:
         test: curl --fail http://host.docker.internal:3000/health || kill 1
         start_period: 10s
         interval: 5s
+
+# If you get errors, 
+# Instead of host.docker.internal, 172.17.0.1
