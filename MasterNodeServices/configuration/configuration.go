@@ -12,7 +12,7 @@ import (
 )
 
 func ConfigurationMain() error {
-	log.Println(color.Colorize(color.Yellow, "Reading Configuration..."))
+	log.Println(color.Colorize(color.Green, "Reading Configuration..."))
 	config_raw_string, err := os.ReadFile(globals.Config_file_path)
 	if err != nil {
 		return errors.New("invalid configuration file path")

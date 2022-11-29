@@ -9,7 +9,6 @@ import (
 	"MasterGobees/utils"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -35,23 +34,23 @@ func MasterStartupSequence() {
 	//--------------------
 	// Reseting cluster settings :
 	if globals.NewCluster {
-		fmt.Println(color.Colorize(color.Green, "Starting new cluster..."))
+		log.Println(color.Colorize(color.Green, "Starting new cluster..."))
 		os.RemoveAll("./temp_splits")
 		os.Remove("./NodeMeta.json")
 		os.Remove("./FileMeta.json")
 	} else {
-		fmt.Println(color.Colorize(color.Green, "Joining existing cluster..."))
+		log.Println(color.Colorize(color.Green, "Joining existing cluster..."))
 		os.RemoveAll("./temp_splits")
 		_, err := os.Stat("./NodeMeta.json")
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "No previous meta data found"))
+			log.Println(color.Colorize(color.Red, "ERROR : No NodeMeta.json file was found."))
 			// globals.NewCluster = true
 			os.Remove("./FileMeta.json")
 			return
 		}
 		_, err = os.Stat("./FileMeta.json")
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "No previous meta data found"))
+			log.Println(color.Colorize(color.Red, "ERROR : No FileMeta.json file was found."))
 			// globals.NewCluster = true
 			return
 		}
@@ -73,7 +72,7 @@ func MasterStartupSequence() {
 }
 
 func main() {
-	log.Println(color.Colorize(color.Yellow, "Starting Master node..."))
+	log.Println(color.Colorize(color.Green, "Starting Master Node..."))
 
 	//Command line arguments flag configs :
 	flag.StringVar(&globals.Config_file_path, "config_path", "./config.json", "Path to configuration file")
@@ -92,7 +91,7 @@ func main() {
 	//Spawn configuration management routines
 	err := configuration.ConfigurationMain()
 	if err != nil {
-		log.Fatal(color.Colorize(color.Red, err.Error()))
+		log.Fatal(color.Colorize(color.Red, "ERROR: "+err.Error()))
 	}
 
 	//Network endpoint routines
