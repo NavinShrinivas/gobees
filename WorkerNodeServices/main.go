@@ -8,7 +8,7 @@ import (
 	"WorkerGobees/globals"
 	"encoding/json"
 	"flag"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -37,8 +37,8 @@ var Mainwg *sync.WaitGroup
 func main() {
 	log.Println(color.Colorize(color.Yellow, "Starting worker node..."))
 
-	flag.StringVar(&globals.MasterUrl, "master", "http://0.0.0.0:3001/", "Path to Masternode")
-	flag.StringVar(&globals.Port, "port", "3002", "Port worker node listens to")
+	flag.StringVar(&globals.MasterUrl, "master", "http://0.0.0.0:3000/", "Path to Masternode")
+	flag.StringVar(&globals.Port, "port", "5000", "Port worker node listens to")
 	flag.StringVar(&globals.Ip, "ip", "0.0.0.0", "IP addr of worker node in same network as Master")
 	flag.Parse()
 	if globals.MasterUrl[len(globals.MasterUrl)-1] != '/' {
@@ -58,7 +58,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	res_body, err := ioutil.ReadAll(res.Body)
+	res_body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}

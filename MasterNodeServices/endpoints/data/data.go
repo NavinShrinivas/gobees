@@ -1,19 +1,17 @@
 package data
 
 import (
-	// "MasterGobees/shell"
 	"MasterGobees/globals"
 	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"log"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"mime"
 
 	"path/filepath"
 
@@ -39,7 +37,7 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 			break
 		}
 		if err != nil {
-			log.Printf(color.Colorize(color.Red, "Error reading file"))
+			log.Printf(color.Colorize(color.Red, "Error reading file: %v"), err)
 			return err
 		}
 		if string(b) == delimiter {
@@ -87,7 +85,7 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 		os.Mkdir("./temp_splits", 0777)
 		f_split, err := os.Create("./temp_splits/" + filepath.Base(file_path) + "_PART00000")
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Error creatring split"))
+			log.Println(color.Colorize(color.Red, "Error creating split"))
 			return err
 		}
 		f_split.Write(temp_split_content)
@@ -102,10 +100,10 @@ func SplitAndUploadFile(file_path string, delimiter string) error {
 	}
 
 	//Below for loop only to handle empty files, if we have not send a file to every workernode but have reached end of file
-	for i = i; i <= number_of_split; i++ {
+	for ; i <= number_of_split; i++ {
 		f_split, err := os.Create("./temp_splits/" + filepath.Base(file_path) + "_PART00000")
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Error creatring split"))
+			log.Println(color.Colorize(color.Red, "Error creating split"))
 			return err
 		}
 		f_split.Close()
@@ -145,7 +143,7 @@ func UploadData(TempFilePath string, node string, fileName string) error {
 		return err
 	}
 
-	res_body, err := ioutil.ReadAll(res.Body)
+	res_body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Something went wrong reading response from worker : "+node))
 		return err
@@ -164,16 +162,16 @@ func UploadData(TempFilePath string, node string, fileName string) error {
 	return nil
 }
 
-type FileFetchRequest struct{
+type FileFetchRequest struct {
 	SS_file string `json:"SS_file"`
 }
 
-func FetchAndMergeFile(v globals.WorkerNode, to_file_path string, ss_file string) error{
+func FetchAndMergeFile(v globals.WorkerNode, to_file_path string, ss_file string) error {
 	// If the file doesn't exist, create it, or append to the file
 	f, err := os.OpenFile(to_file_path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
-    log.Println(color.Colorize(color.Red, "Error creating/opening files to write in local."))
-    return err
+		log.Println(color.Colorize(color.Red, "Error creating/opening files to write in local."))
+		return err
 	}
 	temp_node := "http://" + v.Ip_addr + ":" + v.Port + "/fetchfile"
 	request := FileFetchRequest{
@@ -185,26 +183,26 @@ func FetchAndMergeFile(v globals.WorkerNode, to_file_path string, ss_file string
 		return err
 	}
 	r, err := http.Post(temp_node, "application/json", bytes.NewBuffer(request_bytes))
-	if err!=nil{
+	if err != nil {
 		log.Println(color.Colorize(color.Red, "Error sending fetch request to worker"))
 		return err
 	}
 	_, params, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
-	mr := multipart.NewReader(r.Body,params["boundary"])
+	mr := multipart.NewReader(r.Body, params["boundary"])
 	//We let multipart form take care of the parts it wants to split into
 	//meaning we need to collect all part here and combine them
 	var part_data []byte
 	for part, err := mr.NextPart(); err == nil; part, err = mr.NextPart() {
-		value, _ := ioutil.ReadAll(part)
+		value, _ := io.ReadAll(part)
 		part_data = append(part_data, value...)
 	}
-	if err!=nil{
+	if err != nil {
 		log.Println(color.Colorize(color.Red, "Error getting response from workernode when fetching files : "+temp_node))
 		return err
 	}
 	f.Write(part_data)
 	f.Close()
-	log.Println(color.Colorize(color.Green, "Succefully recived split from : "+temp_node))
+	log.Println(color.Colorize(color.Green, "Successfully received split from : "+temp_node))
 	return nil
 }
 
@@ -216,7 +214,19 @@ func RenameFile(oldpath string, newpath string) error {
 		jsonValue, _ := json.Marshal(data)
 		response, err := http.Post(url, "application/json", bytes.NewBuffer(jsonValue))
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Error while renaming file in worker node"))
+			log.Println(color.Colorize(color.Red, "Error while renaming file in worker node : "+worker.Ip_addr))
+			log.Println(color.Colorize(color.Red, "Undoing rename operation"))
+			for j := 0; j < i; j++ {
+				worker := globals.WorkerNodesMetadata[j]
+				url := "http://" + worker.Ip_addr + ":" + worker.Port + "/renamefile"
+				data := map[string]string{"oldpath": newpath, "newpath": oldpath}
+				jsonValue, _ := json.Marshal(data)
+				response, err := http.Post(url, "application/json", bytes.NewBuffer(jsonValue))
+				if err != nil {
+					log.Println(color.Colorize(color.Red, "Error while undoing renaming file in worker node"+worker.Ip_addr))
+				}
+				defer response.Body.Close()
+			}
 			return err
 		}
 		defer response.Body.Close()

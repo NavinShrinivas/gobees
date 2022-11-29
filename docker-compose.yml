@@ -1,26 +1,20 @@
-version: "2"
+version: "3"
 services:
-  master:
-    image: "master_image"
-    ports:
-      - "3001:3001"
-    tty: true
-    stdin_open: true
   worker1:
-    image: "worker_image"
+    image: "worker"
     ports:
-      - "3002:3002"
+      - "5000:5000"
+    command: "/WorkerGobees -ip=0.0.0.0 -port=5000 -master=http://host.docker.internal:3000"
     healthcheck:
-      interval: 5s
-      retries: 5
-    tty: true
-    stdin_open: true
+        test: curl --fail http://host.docker.internal:3000/health || kill 1
+        start_period: 10s
+        interval: 5s
   worker2:
-    image: "worker_image"
+    image: "worker"
     ports:
-      - "3003:3003"
+      - "5001:5001"
+    command: "/WorkerGobees -ip=0.0.0.0 -port=5001 -master=http://host.docker.internal:3000"
     healthcheck:
-      interval: 5s
-      retries: 5
-    tty: true
-    stdin_open: true
+        test: curl --fail http://host.docker.internal:3000/health || kill 1
+        start_period: 10s
+        interval: 5s

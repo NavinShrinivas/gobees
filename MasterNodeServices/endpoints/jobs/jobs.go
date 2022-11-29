@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -20,7 +19,7 @@ import (
 )
 
 func SendMapJobs(mapper_command string, input_file string) error {
-	log.Println(color.Colorize(color.Yellow,"Starting Map Job"))
+	log.Println(color.Colorize(color.Yellow, "Starting Map Job"))
 	command_split := strings.Split(mapper_command, " ")
 	mapper_file_path := command_split[0]
 	mapper_args := ""
@@ -42,12 +41,12 @@ func SendMapJobs(mapper_command string, input_file string) error {
 	local_wg := new(sync.WaitGroup)
 	err_chan := make(chan error, 1000)
 	var nodes_with_split []globals.WorkerNode
-	for _,v := range globals.FileMetadata{
-		if v.File_name == input_file{
+	for _, v := range globals.FileMetadata {
+		if v.File_name == input_file {
 			nodes_with_split = v.Nodes
 		}
 	}
-	for _, v := range nodes_with_split{
+	for _, v := range nodes_with_split {
 		temp_node := "http://" + v.Ip_addr + ":" + v.Port + "/mapjob"
 		local_wg.Add(1)
 		go NodeMapJob(body, temp_node, local_wg, err_chan, formtype)
@@ -55,17 +54,16 @@ func SendMapJobs(mapper_command string, input_file string) error {
 	local_wg.Wait() //After all the threads are done, we can see if any errors in channel
 	for err := range err_chan {
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Map job failed :<("))
+			log.Println(color.Colorize(color.Red, "Map job failed :("))
 			return err
 		}
 		if err == nil {
 			//Meaning out map job passed!
-			log.Println(color.Colorize(color.Green, "Map Job completed Succesfully!"))
+			log.Println(color.Colorize(color.Green, "Map Job completed Successfully!"))
 			return nil
 		}
 	}
 	return nil
-
 }
 
 func NodeMapJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan chan error, formtype string) {
@@ -82,7 +80,7 @@ func NodeMapJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan ch
 		err_chan <- err
 	}
 
-	res_body, err := ioutil.ReadAll(res.Body)
+	res_body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Something went wrong reading response from worker during map job :"+node))
 		err_chan <- err
@@ -98,7 +96,7 @@ func NodeMapJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan ch
 		return
 	}
 	if res_body_obj["status"] == false {
-		log.Println(color.Colorize(color.Red, "One of the Worker ran into an error while running map, node :"+node))
+		log.Println(color.Colorize(color.Red, "One of the Worker Nodes ran into an error while running map, node :"+node))
 		log.Println("Error from node : ")
 		fmt.Println(res_body_obj["message"])
 		err_chan <- errors.New("Error from WorkerNode")
@@ -111,26 +109,26 @@ func NodeMapJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan ch
 	return
 }
 
-func StartShuffle(custom_function bool, shuffle_file_path string) error{
-	log.Println(color.Colorize(color.Yellow,"Starting Suffle Job"))
+func StartShuffle(custom_function bool, shuffle_file_path string) error {
+	log.Println(color.Colorize(color.Yellow, "Starting Shuffle Job"))
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	if custom_function{
+	if custom_function {
 		writer.WriteField("custom", "true")
-	  file, _ := os.Open(shuffle_file_path)
+		file, _ := os.Open(shuffle_file_path)
 		part, _ := writer.CreateFormFile("ShuffleFile", filepath.Base(shuffle_file_path))
 		io.Copy(part, file)
 		defer file.Close()
-	}else{
+	} else {
 		writer.WriteField("custom", "false")
 	}
 	metadata_bytes, err := json.Marshal(globals.WorkerNodesMetadata)
-	if err!=nil{
-		log.Println(color.Colorize(color.Red,"Error packaging Node metadata for shuffle job"))
+	if err != nil {
+		log.Println(color.Colorize(color.Red, "Error packaging Node metadata for shuffle job"))
 	}
-	writer.WriteField("NodeInfo",string(metadata_bytes))
+	writer.WriteField("NodeInfo", string(metadata_bytes))
 
 	formtype := writer.FormDataContentType()
 	writer.Close()
@@ -145,12 +143,12 @@ func StartShuffle(custom_function bool, shuffle_file_path string) error{
 	local_wg.Wait() //After all the threads are done, we can see if any errors in channel
 	for err := range err_chan {
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Shuffle init job failed :<("))
+			log.Println(color.Colorize(color.Red, "Shuffle init job failed :("))
 			return err
 		}
 		if err == nil {
 			//Meaning out map job passed!
-			log.Println(color.Colorize(color.Green, "Shuffle Job completed Succesfully!"))
+			log.Println(color.Colorize(color.Green, "Shuffle Job completed Successfully!"))
 			return nil
 		}
 	}
@@ -171,7 +169,7 @@ func NodeShuffleJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_cha
 		err_chan <- err
 	}
 
-	res_body, err := ioutil.ReadAll(res.Body)
+	res_body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Something went wrong reading response from worker during shuffle job :"+node))
 		err_chan <- err
@@ -202,9 +200,9 @@ func NodeShuffleJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_cha
 	return
 }
 
-func StartReduce(reducer_command string, output_file string) error{
+func StartReduce(reducer_command string, output_file string) error {
 	//Need to upload reducer file along with output file name
-	log.Println(color.Colorize(color.Yellow,"Starting Reducer Job"))
+	log.Println(color.Colorize(color.Yellow, "Starting Reducer Job"))
 
 	command_split := strings.Split(reducer_command, " ")
 	reducer_file_path := command_split[0]
@@ -233,27 +231,27 @@ func StartReduce(reducer_command string, output_file string) error{
 	local_wg.Wait() //After all the threads are done, we can see if any errors in channel
 	for err := range err_chan {
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Reduce job failed :<("))
+			log.Println(color.Colorize(color.Red, "Reduce job failed :("))
 			return err
 		}
 		if err == nil {
 			//Meaning out map job passed!
 
 			//This way of adding meta from master node needs to be changed in the future
-			log.Println(color.Colorize(color.Green, "Reduce Job completed Succesfully!"))
+			log.Println(color.Colorize(color.Green, "Reduce Job completed Successfully!"))
 			mr_job_out_file_meta := globals.File{
 				File_name: output_file,
-				Splits: int32(len(globals.WorkerNodesMetadata)),
-				Nodes: globals.WorkerNodesMetadata,
+				Splits:    int32(len(globals.WorkerNodesMetadata)),
+				Nodes:     globals.WorkerNodesMetadata,
 			}
-			globals.FileMetadata = append(globals.FileMetadata,mr_job_out_file_meta)
+			globals.FileMetadata = append(globals.FileMetadata, mr_job_out_file_meta)
 			return nil
 		}
 	}
 	return nil
 }
 
-func NodeReduceJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan chan error, formtype string){
+func NodeReduceJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan chan error, formtype string) {
 	r, err := http.NewRequest("POST", node, body)
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Something went wrong uploading reduce file to worker : "+node))
@@ -267,7 +265,7 @@ func NodeReduceJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan
 		err_chan <- err
 	}
 
-	res_body, err := ioutil.ReadAll(res.Body)
+	res_body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Something went wrong reading response from worker during reduce job :"+node))
 		err_chan <- err
@@ -296,5 +294,3 @@ func NodeReduceJob(body *bytes.Buffer, node string, wg *sync.WaitGroup, err_chan
 	//Outputs in SS after successful reduce stage should be the "OUT" file name
 	return
 }
-
-

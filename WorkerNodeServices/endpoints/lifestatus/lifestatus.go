@@ -4,7 +4,7 @@ import (
 	"WorkerGobees/globals"
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -28,8 +28,11 @@ func NodeBirthRegister() {
 		log.Fatal(color.Colorize(color.Red, "Error registering node with master node, please check IP address of master"))
 	}
 	request_bytes_stream := bytes.NewBuffer(request_bytes)
-	response, err := http.Post(globals.MasterUrl + "resetnode", "application/json",request_bytes_stream)
-	res_body, err := ioutil.ReadAll(response.Body)
+	response, err := http.Post(globals.MasterUrl+"resetnode", "application/json", request_bytes_stream)
+	if err != nil {
+		log.Fatal(color.Colorize(color.Red, "Error registering node with master node, please check IP address of master"))
+	}
+	res_body, err := io.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,8 +48,11 @@ func NodeBirthRegister() {
 	}
 	request_stream := bytes.NewBuffer(request_bytes)
 	response, err = http.Post(globals.MasterUrl+"nodebirth", "application/json", request_stream)
+	if err != nil {
+		log.Fatal(color.Colorize(color.Red, "Error registering node with master node, please check IP address of master"))
+	}
 
-	res_body, err = ioutil.ReadAll(response.Body)
+	res_body, err = io.ReadAll(response.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,9 +62,8 @@ func NodeBirthRegister() {
 		log.Fatal(color.Colorize(color.Red, "Error parsing request from Master node addition request."))
 	}
 	if res_body_obj["status"] == true {
-		log.Println(color.Colorize(color.Green, "Succesfully register with Master node in cluster!"))
+		log.Println(color.Colorize(color.Green, "Successfully register with Master node in cluster!"))
 	} else {
 		log.Fatal(color.Colorize(color.Red, "Error registering node with master node, please check status of Master node."))
 	}
-
 }

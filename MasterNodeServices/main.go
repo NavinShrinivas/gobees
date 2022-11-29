@@ -21,27 +21,26 @@ import (
 
 func NetworkEndpoints() {
 	http.HandleFunc("/", home.MainHome)
+	http.HandleFunc("/health", home.Health)
 	http.HandleFunc("/nodebirth", node.MainNodeBirth)
 	http.HandleFunc("/resetnode", node.ResetNode)
 	// http.HandleFunc("/nodedeath", node.MainNodeBirth)
 	master_node_url := "0.0.0.0:" + globals.ServerPort
 	log.Fatal(http.ListenAndServe(master_node_url, nil))
 }
+
 func MasterStartupSequence() {
 	//Some gloabls inits :
 	globals.MainWg = new(sync.WaitGroup)
-	globals.NewCluster = false
 	//--------------------
-	//Ressting cluster settings :
-	fmt.Print(color.Colorize(color.Red, "Resetting previous cluster data [Y]/n : "))
-	var option string
-	fmt.Scanln(&option)
-	if option != "n" {
-		globals.NewCluster = true
+	// Reseting cluster settings :
+	if globals.NewCluster {
+		fmt.Println(color.Colorize(color.Green, "Starting new cluster..."))
 		os.RemoveAll("./temp_splits")
 		os.Remove("./NodeMeta.json")
 		os.Remove("./FileMeta.json")
 	} else {
+		fmt.Println(color.Colorize(color.Green, "Joining existing cluster..."))
 		os.RemoveAll("./temp_splits")
 		_, err := os.Stat("./NodeMeta.json")
 		if err != nil {
@@ -64,20 +63,31 @@ func MasterStartupSequence() {
 		os.Remove("./NodeMeta.json")
 		os.Remove("./FileMeta.json")
 	}
+	dir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+		dir = "."
+	}
+	globals.InitialDirectory = dir
 	//--------------------------
 }
 
 func main() {
 	log.Println(color.Colorize(color.Yellow, "Starting Master node..."))
-	MasterStartupSequence()
 
 	//Command line arguments flag configs :
 	flag.StringVar(&globals.Config_file_path, "config_path", "./config.json", "Path to configuration file")
 	debug_flag_local := flag.Bool("debug", false, "Whether to print debug outputs or not")
-	flag.StringVar(&globals.ServerPort, "port", "3001", "Port in which Master Node listens to.")
+	new_cluster_flag := flag.Bool("new_cluster", false, "Whether to start a new cluster or not")
+	flag.StringVar(&globals.ServerPort, "port", "3000", "Port in which Master Node listens to.")
+
 	flag.Parse()
-	globals.Debug_flag = *debug_flag_local //Pushing value to global variable
+	//Pushing value to global variable
+	globals.Debug_flag = *debug_flag_local
+	globals.NewCluster = *new_cluster_flag
 	//-------------------------------------
+
+	MasterStartupSequence()
 
 	//Spawn configuration management routines
 	err := configuration.ConfigurationMain()
@@ -89,7 +99,7 @@ func main() {
 	globals.MainWg.Add(1)
 	go NetworkEndpoints()
 	go cntrlc()
-	log.Println(color.Colorize(color.Green, "Listen on port "+globals.ServerPort))
+	log.Println(color.Colorize(color.Green, "Listening on port "+globals.ServerPort))
 
 	//Shell routines, all prints after shell Initialize must be printed only using print function in shell
 	shell.Initialize()

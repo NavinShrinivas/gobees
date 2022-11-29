@@ -25,7 +25,6 @@ func SimpleFailStatus(res string, w http.ResponseWriter) {
 	}
 	w.WriteHeader(http.StatusForbidden)
 	w.Write(response_bytes)
-	return
 }
 
 func SimpleSuccesssStatus(res string, w http.ResponseWriter) {
@@ -40,7 +39,6 @@ func SimpleSuccesssStatus(res string, w http.ResponseWriter) {
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(response_bytes)
-	return
 }
 
 func SimpleInvalidPath(res string, w http.ResponseWriter) {
@@ -55,5 +53,4 @@ func SimpleInvalidPath(res string, w http.ResponseWriter) {
 	}
 	w.WriteHeader(http.StatusNotFound)
 	w.Write(response_bytes)
-	return
 }

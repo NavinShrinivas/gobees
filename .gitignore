@@ -16,4 +16,7 @@
 MasterNodeServices/web-BerkStan.txt
 WorkerNodeServices/SS/*
 WorkerNodeServices/MAPJOB00000
+WorkerNodeServices/INTERPART*
 MasterNodeServices/temp_splits
+MasterNodeServices/FileMeta.json
+MasterNodeServices/NodeMeta.json

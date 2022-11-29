@@ -12,6 +12,7 @@ var ServerPort string
 var WorkerNodesMetadata []WorkerNode
 var FileMetadata []File
 var NewCluster bool
+var InitialDirectory string
 
 type WorkerNode struct {
 	Ip_addr string `json:"ip_addr"`

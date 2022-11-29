@@ -12,3 +12,8 @@ func MainHome(w http.ResponseWriter, r *http.Request) {
 	utils.SimpleSuccesssStatus("This is the MasterNode home end point. Master node is alive.", w)
 	return
 }
+
+func Health(w http.ResponseWriter, r *http.Request) {
+	utils.SimpleSuccesssStatus("Master node is alive.", w)
+	return
+}

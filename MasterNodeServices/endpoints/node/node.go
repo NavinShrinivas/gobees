@@ -5,7 +5,7 @@ import (
 	"MasterGobees/shell"
 	"MasterGobees/utils"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -15,12 +15,12 @@ import (
 func MainNodeBirth(w http.ResponseWriter, r *http.Request) {
 	//Need to store statefully node info
 	if r.Method != "POST" {
-		utils.SimpleInvalidPath("Ivalid path", w)
+		utils.SimpleInvalidPath("Invalid path", w)
 		return
 	}
 	//Let's not store worker node info staefully, entirely in memory
 	shell.PrintToShell(color.Colorize(color.Yellow, "[ENDPOINT] Request recived to add new worker node."))
-	res_body, err := ioutil.ReadAll(r.Body)
+	res_body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,8 +29,15 @@ func MainNodeBirth(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(color.Colorize(color.Red, "[ENDPOINT ERROR] Error parsing request from Worker node addition request."))
 	}
+
+	// if ip is 127.0.0.1 use 0.0.0.0 instead
+	ip := r.RemoteAddr[:len(r.RemoteAddr)-6]
+	if ip == "127.0.0.1" {
+		ip = "0.0.0.0"
+	}
+
 	new_worker_node := globals.WorkerNode{
-		Ip_addr: res_body_obj["ip_addr"].(string),
+		Ip_addr: ip,
 		Port:    res_body_obj["port"].(string),
 	}
 	for _, v := range globals.WorkerNodesMetadata {
@@ -43,13 +50,12 @@ func MainNodeBirth(w http.ResponseWriter, r *http.Request) {
 	globals.WorkerNodesMetadata = append(globals.WorkerNodesMetadata, new_worker_node)
 	utils.SimpleSuccesssStatus("Successfully Added node to cluster!", w)
 	shell.PrintToShell(color.Colorize(color.Green, "Added one Node to cluster : "+new_worker_node.Ip_addr+":"+new_worker_node.Port))
-	return
 }
 
 func ResetNode(w http.ResponseWriter, r *http.Request) {
 	//If already in meta we need to make sure the node "re-joining does not reset itself!"
 	var res_body_obj map[string]interface{}
-	res_body, err := ioutil.ReadAll(r.Body)
+	res_body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,18 +71,17 @@ func ResetNode(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	for _, v := range globals.WorkerNodesMetadata {
 		if new_worker_node.Ip_addr == v.Ip_addr && v.Port == new_worker_node.Port {
-			shell.PrintToShell(color.Colorize(color.Green,"node rejoining, hence no node reset."))
-			body, _:= json.Marshal("false")
+			shell.PrintToShell(color.Colorize(color.Green, "Node rejoining, hence no node reset."))
+			body, _ := json.Marshal("false")
 			w.Write(body)
 			return
 		}
 	}
 	body, err := json.Marshal(globals.NewCluster)
 	if err != nil {
-		shell.PrintToShell(color.Colorize(color.Red, "Not able to comm with worker :("))
+		shell.PrintToShell(color.Colorize(color.Red, "Not able to communicate with worker :("))
 	}
 	w.Write(body)
-	return
 }
 
 // func KillNode(){

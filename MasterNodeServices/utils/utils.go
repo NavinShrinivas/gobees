@@ -61,6 +61,9 @@ func SimpleInvalidPath(res string, w http.ResponseWriter) {
 }
 
 func ExitSequence() {
+	cd := globals.InitialDirectory
+	os.Chdir(cd)
+
 	fd1, _ := os.Create("./NodeMeta.json")
 	byte_buffer1, _ := json.Marshal(globals.WorkerNodesMetadata)
 	fd1.Write(byte_buffer1)
@@ -71,6 +74,6 @@ func ExitSequence() {
 	fd2.Write(byte_buffer2)
 	fd2.Close()
 
-	log.Println(color.Colorize(color.Green, "Storing meta for future use. Adios."))
+	log.Println(color.Colorize(color.Green, "Storing meta for future use. Adios. :)"))
 	os.Exit(0)
 }

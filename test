@@ -1,0 +1,11 @@
+show nodes
+show files
+put ./test/web-Subset.txt
+show files
+rename web-Subset.txt web.txt
+fetch web.txt web.txt 
+job -mapper=./test/test_mapper.py -reducer=./test/test_reducer.py -IN=web.txt -OUT=output
+show files
+fetch output output
+delete output
+show files
