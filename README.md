@@ -25,7 +25,7 @@ GoBees is yet another Map Reduce framework, written and powered by GO! This proj
 
 - Clone repo and move into project root : 
 ```
-git clone https://github.com/NavinShrinivas/gobees ~/gobees && cs ~/gobees
+git clone https://github.com/NavinShrinivas/gobees ~/gobees && cd ~/gobees
 ```
 
 ### Manual setup
