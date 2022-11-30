@@ -439,6 +439,7 @@ func jobHandlerSS(command_parse []string, command string) {
 		log.Println(color.Colorize(color.Red, "ERROR: Reduce jobs failed"))
 		return
 	}
+	log.Println(color.Colorize(color.Green, "Map Reduce Job completed! :)"))
 	//Below part is already done in reducer function
 	// //We need to update metadata about the new reducer output
 	// new_output_file_meta := globals.File{
