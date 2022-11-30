@@ -152,6 +152,13 @@ func StartShuffle(custom_function bool, shuffle_file_path string) error {
 			return nil
 		}
 	}
+	for _, v := range globals.WorkerNodesMetadata {
+		temp_node := "http://" + v.Ip_addr + ":" + v.Port + "/sortshuffle"
+		local_wg.Add(1)
+		go func(){
+			http.Get(temp_node)
+		}()
+	}
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"mime/multipart"
 	"WorkerGobees/globals"
 	"WorkerGobees/utils"
 	"bufio"
@@ -13,6 +14,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"fmt"
 
 	"github.com/TwiN/go-color"
 	hash "github.com/theTardigrade/golang-hash"
@@ -101,6 +103,7 @@ func MapJob(w http.ResponseWriter, r *http.Request) {
 func StartShuffle(w http.ResponseWriter, r *http.Request) {
 
 	log.Println(color.Colorize(color.Yellow, "[ENDPOINT] Reciving a Shuffle job..."))
+	os.Remove("./temp_buckets/")
 	os.Create("./INTERPART00002")
 	custom_function := r.FormValue("custom")
 	if custom_function == "true" {
@@ -124,61 +127,95 @@ func StartShuffle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	scanner := bufio.NewScanner(fd)
+	var bucket_fd []*os.File
+	for i := range NodeMetaData{
+		os.Create("./temp_buckets/"+strconv.Itoa(i))
+		fd, _ := os.OpenFile("./temp_buckets"+strconv.Itoa(i),os.O_APPEND|os.O_CREATE|os.O_WRONLY,0777)
+		bucket_fd = append(bucket_fd, fd)
+	}
+	os.Mkdir("./temp_buckets", 0777)
+	i := 0
 	for scanner.Scan() {
+		i+=1
 		line := string(scanner.Bytes())
 		line_split := strings.Split(line, ",")
 		key := line_split[0]
 		key_hash := hash.UintString(key)
-		to_node := uint(key_hash) % uint(mod_value)
+		to_node := int (uint(key_hash) % uint(mod_value))
 		line += "\n"
+		bucket_fd[to_node].Write([]byte(line)) //We are collection each into bucket
+		fmt.Println("Done with line : ",i)
+	}
+	for i,v := range globals.ShuffleNodeMetadata{
+		to_node := i
 		var base_url_of_to_node string
-		if globals.ShuffleNodeMetadata[to_node].Ip_addr == "0.0.0.0" {
+		if v.Ip_addr == "0.0.0.0" {
 			//If they were part of local cluster then this is activated
 			master_url_split := strings.Split(globals.MasterUrl, ":")
-			base_url_of_to_node = "http:" + master_url_split[1] + ":" + globals.ShuffleNodeMetadata[to_node].Port
-		} else if globals.ShuffleNodeMetadata[to_node].Ip_addr == globals.Ip {
+			base_url_of_to_node = "http:" + master_url_split[1] + ":" + v.Port
+		} else if v.Ip_addr == globals.Ip {
 			//If they were part of global cluster but for current node its local
 			//Need Inspection, some nodes we failing on access their servers on 0.0.0.0 :skull:
-			base_url_of_to_node = "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port
-		} else if globals.ShuffleNodeMetadata[to_node].Ip_addr == "172.20.0.1"{
+			base_url_of_to_node = "http://" + v.Ip_addr + ":" + v.Port
+		} else if v.Ip_addr == "172.20.0.1"{
 			master_url_split := strings.Split(globals.MasterUrl, ":")
-			base_url_of_to_node = "http:" + master_url_split[1] + ":" + globals.ShuffleNodeMetadata[to_node].Port
+			base_url_of_to_node = "http:" + master_url_split[1] + ":" + v.Port
 		} else {
 			//If completetly global
 			base_url_of_to_node = "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port
 		}
 		to_node_url := base_url_of_to_node + "/shuffleshare"
-		body_streamer := bytes.NewReader([]byte(line))
-		res, err := http.Post(to_node_url, "text/plain", body_streamer)
+		node := to_node_url
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		formtype := writer.FormDataContentType()
+		part, _ := writer.CreateFormFile("ShuffleBucket","ShuffleBucket")
+		io.Copy(part, bucket_fd[i])
+		writer.Close()
+
+		r, err := http.NewRequest("POST", node, body)
 		if err != nil {
-			log.Println(color.Colorize(color.Red, "Error on network interactions during shuffle"))
-			utils.SimpleFailStatus("Error network transfer during shuffle", w)
+			log.Println(color.Colorize(color.Red, "Something went wrong during network transmission to : "+node))
 			return
 		}
+		r.Header.Add("Content-Type", formtype)
+		client := &http.Client{}
+		res, err := client.Do(r)
+		if err != nil {
+			log.Println(color.Colorize(color.Red, "Something went wrong during network transmission to : "+node))
+			return
+		}
+
 		res_body, err := io.ReadAll(res.Body)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(color.Colorize(color.Red, "Something went wrong reading response during shuffle from :"+node))
+			return
 		}
 		var res_body_obj map[string]interface{}
 		err = json.Unmarshal(res_body, &res_body_obj)
 		if err != nil {
-			log.Fatal(color.Colorize(color.Red, "Something went wrong reading reponse from other worker node"))
-			utils.SimpleFailStatus("Error network transffer during shuffle", w)
+			log.Fatal(color.Colorize(color.Red, "Error parsing response from worker during shuffle job"))
 			return
 		}
 		if res_body_obj["status"] == false {
-			log.Fatal(color.Colorize(color.Red, "Something went wrong on to node during shuffle"))
-			utils.SimpleFailStatus("Error network transffer during shuffle", w)
+			log.Println(color.Colorize(color.Red, "One of the Worker Nodes ran into an error while handling shuffle bucket:"+node))
+			log.Println("Error from node : ")
+			fmt.Println(res_body_obj["message"])
 			return
 		}
 	}
-	err = InMemSorter("./INTERPART00002")
+	utils.SimpleSuccesssStatus("", w)
+}
+
+func ShuffleSort(w http.ResponseWriter, r *http.Request){
+	err := InMemSorter("./INTERPART00002")
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Failed sorting file"))
 		utils.SimpleFailStatus("Failed sorting file from shuffling stage", w)
 		return
 	}
-	utils.SimpleSuccesssStatus("", w)
+	utils.SimpleSuccesssStatus("",w)
+	return
 }
 
 func ShuffleShare(w http.ResponseWriter, r *http.Request) {

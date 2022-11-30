@@ -24,6 +24,7 @@ func mainHttpHandler() {
 	http.HandleFunc("/deletefile", data.DeleteFile)
 	http.HandleFunc("/mapjob", jobs.MapJob)
 	http.HandleFunc("/startshuffle", jobs.StartShuffle)
+	http.HandleFunc("/sortshuffle", jobs.ShuffleSort)
 	http.HandleFunc("/shuffleshare", jobs.ShuffleShare)
 	http.HandleFunc("/reducejob", jobs.ReduceJob)
 	http.HandleFunc("/fetchfile", data.FetchFile)
