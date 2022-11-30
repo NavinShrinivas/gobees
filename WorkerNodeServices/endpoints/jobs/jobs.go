@@ -140,12 +140,14 @@ func StartShuffle(w http.ResponseWriter, r *http.Request) {
 			//If they were part of global cluster but for current node its local
 			//Need Inspection, some nodes we failing on access their servers on 0.0.0.0 :skull:
 			base_url_of_to_node = "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port
+		} else if globals.ShuffleNodeMetadata[to_node].Ip_addr == "172.20.0.1"{
+			master_url_split := strings.Split(globals.MasterUrl, ":")
+			base_url_of_to_node = "http:" + master_url_split[1] + ":" + globals.ShuffleNodeMetadata[to_node].Port
 		} else {
 			//If completetly global
 			base_url_of_to_node = "http://" + globals.ShuffleNodeMetadata[to_node].Ip_addr + ":" + globals.ShuffleNodeMetadata[to_node].Port
 		}
 		to_node_url := base_url_of_to_node + "/shuffleshare"
-		log.Println(to_node_url)
 		body_streamer := bytes.NewReader([]byte(line))
 		res, err := http.Post(to_node_url, "text/plain", body_streamer)
 		if err != nil {

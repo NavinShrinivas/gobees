@@ -349,7 +349,7 @@ func deleteFileSS(command_parse []string) {
 	log.Println(color.Colorize(color.Red, "ERROR: File does not exist in shared storage"))
 }
 
-func NewcommandParsing(command string) (map[string]string, error) {
+func jobcommandParsing(command string) (map[string]string, error) {
 	command = strings.Replace(command, "\r", "", -1)
 	command = strings.Replace(command, "\n", "", -1)
 	var command_map map[string]string = make(map[string]string)
@@ -364,7 +364,7 @@ func NewcommandParsing(command string) (map[string]string, error) {
 func jobHandlerSS(command_parse []string, command string) {
 	//Map reduce job incoming
 	//Time to write command parsing tool
-	command_vars, _ := NewcommandParsing(command)
+	command_vars, _ := jobcommandParsing(command)
 	//Need to check if everything we need is here and if it is valid
 	//Mapper //Reducer //IN file //OUT file
 	input_file_ss_name, ok := command_vars["IN"]
@@ -432,6 +432,7 @@ func jobHandlerSS(command_parse []string, command string) {
 		log.Println(color.Colorize(color.Red, "ERROR: Partitioning/Shuffling failed"))
 		return
 	}
+	log.Println(color.Colorize(color.Green, "Map Reduce Job completed! :)"))
 
 	err = jobs.StartReduce(reducer_file_name, output_file_ss_name)
 	if err != nil {

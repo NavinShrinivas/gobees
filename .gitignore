@@ -15,6 +15,7 @@
 # vendor/
 MasterNodeServices/web-BerkStan.txt
 WorkerNodeServices/SS/*
+MasterNodeServices/test/web-BerkStan.txt
 WorkerNodeServices/MAPJOB00000
 WorkerNodeServices/INTERPART*
 MasterNodeServices/temp_splits
