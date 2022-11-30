@@ -229,7 +229,7 @@ func deleteFile(command_parse []string) {
 	log.Println(color.Colorize(color.Red, "File does not exist!"))
 }
 
-func NewcommandParsing(command string) (map[string]string, error) {
+func jobcommandParsing(command string) (map[string]string, error) {
 	var command_map map[string]string = make(map[string]string)
 	var re = regexp.MustCompile(`[\-](\w*)=([^\s]+[^\-]*\b)`)
 	for _, match := range re.FindAllString(command, -1) {
@@ -239,10 +239,10 @@ func NewcommandParsing(command string) (map[string]string, error) {
 	return command_map, nil
 }
 
-func newHandler(command_parse []string, command string) {
+func jobHandler(command_parse []string, command string) {
 	//Map reduce job incoming
 	//Time to write command parsing tool
-	command_vars, _ := NewcommandParsing(command)
+	command_vars, _ := jobcommandParsing(command)
 	//Need to check if everything we need is here and if it is valid
 	//Mapper //Reducer //IN file //OUT file
 	input_file_ss_name, ok := command_vars["IN"]
@@ -298,6 +298,7 @@ func newHandler(command_parse []string, command string) {
 		log.Println(color.Colorize(color.Red, "Reduce job failed :("))
 		return
 	}
+	log.Println(color.Colorize(color.Green, "Map Reduce Job completed! :)"))
 
 	//Below part is already done in reducer function
 	// //We need to update metadata about the new reducer output
@@ -360,7 +361,7 @@ func commandProcessor(command string) {
 		return
 	}
 	if command_parse[0] == "JOB" {
-		newHandler(command_parse, command)
+		jobHandler(command_parse, command)
 		return
 	}
 	if command_parse[0] == "EXIT" {
