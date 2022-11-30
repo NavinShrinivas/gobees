@@ -152,6 +152,29 @@ func StartShuffle(custom_function bool, shuffle_file_path string) error {
 			return nil
 		}
 	}
+	new_wg := new(sync.WaitGroup)
+	for _, v := range globals.WorkerNodesMetadata {
+		temp_node := "http://" + v.Ip_addr + ":" + v.Port + "/sortshuffle"
+		new_wg.Add(1)
+		go func(){
+			r, err := http.Get(temp_node)
+			res_body, err := io.ReadAll(r.Body)
+			var res_body_obj map[string]interface{}
+			err = json.Unmarshal(res_body, &res_body_obj)
+			if err != nil {
+				log.Fatal(color.Colorize(color.Red, "Error parsing response from worker during shuffle sort"))
+				return
+			}
+			if res_body_obj["status"] == false {
+				log.Println(color.Colorize(color.Red, "One of the Worker Nodes ran into an error while shuffle sort in node :"+temp_node))
+				log.Println("Error from node : ")
+				fmt.Println(res_body_obj["message"])
+				return
+			}
+			new_wg.Done()
+		}()
+	}
+	new_wg.Wait()
 	return nil
 }
 

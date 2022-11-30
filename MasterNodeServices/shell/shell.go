@@ -432,7 +432,6 @@ func jobHandlerSS(command_parse []string, command string) {
 		log.Println(color.Colorize(color.Red, "ERROR: Partitioning/Shuffling failed"))
 		return
 	}
-	log.Println(color.Colorize(color.Green, "Map Reduce Job completed! :)"))
 
 	err = jobs.StartReduce(reducer_file_name, output_file_ss_name)
 	if err != nil {

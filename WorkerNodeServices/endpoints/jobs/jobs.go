@@ -172,14 +172,21 @@ func StartShuffle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	err = InMemSorter("./INTERPART00002")
+	utils.SimpleSuccesssStatus("", w)
+}
+
+func SortShuffle(w http.ResponseWriter, r *http.Request){
+	log.Println("Sorting request")
+	err := InMemSorter("./INTERPART00002")
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "Failed sorting file"))
 		utils.SimpleFailStatus("Failed sorting file from shuffling stage", w)
 		return
 	}
-	utils.SimpleSuccesssStatus("", w)
+	utils.SimpleSuccesssStatus("",w)
+	return
 }
+
 
 func ShuffleShare(w http.ResponseWriter, r *http.Request) {
 	fd, err := os.OpenFile("./INTERPART00002", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
@@ -344,6 +351,7 @@ func (a InMemFile) Less(i, j int) bool {
 }
 
 func InMemSorter(file_name string) error {
+	os.Create("./INTERPART00003")
 	raw_file, err := os.ReadFile(file_name)
 	if err != nil {
 		log.Println(color.Colorize(color.Red, "[SORT ERROR] Error reading file from shuffle task, maybe shuffle failed?"))
