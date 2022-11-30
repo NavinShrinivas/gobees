@@ -58,4 +58,24 @@ go run . -master="http://ip.of.master.node:3000"
 
 ### Docker setup
 
+- Make sure docker daemon is running
 
+- Run the following commands which is present in the docker-setup.sh to build images
+  - `docker build -t master ./MasterNodeServices/` : Builds Master Node image
+  - `docker build -t worker ./WorkerNodeServices/` : Builds Worker Node image
+  
+- There are two methods to run docker
+  - Multi container cluster with a Master Node and 2 Worker Nodes
+    - `docker compose down` : Stops containers and removes containers, networks
+    - `docker compose -f docker-compose-all.yml up -d` : Orchestrates an environment in detached mode
+    - `docker attach gobees-master-1` : Attaches to Master Node container
+    
+  - Multi container cluster with 2 Worker Nodes
+    - Ensure that Master Node is running 
+    - `docker compose down` : Stops containers and removes containers, networks
+    - `docker compose -f docker-compose.yml up` : Orchestrates an environment
+
+  - Extras
+    - Worker Node has a health check for the Master Node by checking if it is alive every `5` seconds and it auto quits if the Master Node is down
+    
+ 
