@@ -4,17 +4,17 @@ services:
     image: "worker"
     ports:
       - "5000:5000"
-    command: "/WorkerGobees -ip=0.0.0.0 -port=5000 -master=http://host.docker.internal:3000"
+    command: "/WorkerGobees -ip=0.0.0.0 -port=5000 -master=http://172.17.0.1:3000"
     healthcheck:
-        test: curl --fail http://host.docker.internal:3000/health || kill 1
+        test: curl --fail http://172.17.0.1:3000/health || kill 1
         start_period: 10s
         interval: 5s
   worker2:
     image: "worker"
     ports:
       - "5001:5001"
-    command: "/WorkerGobees -ip=0.0.0.0 -port=5001 -master=http://host.docker.internal:3000"
+    command: "/WorkerGobees -ip=0.0.0.0 -port=5001 -master=http://172.17.0.1:3000"
     healthcheck:
-        test: curl --fail http://host.docker.internal:3000/health || kill 1
+        test: curl --fail http://172.17.0.1:3000/health || kill 1
         start_period: 10s
         interval: 5s
