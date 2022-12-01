@@ -77,5 +77,14 @@ go run . -master="http://ip.of.master.node:3000"
 
   - Extras
     - Worker Node has a health check for the Master Node by checking if it is alive every `5` seconds and it auto quits if the Master Node is down
-    
- 
+
+## Screenshots : 
+- A localhost cluster running 1 master node and 2 worker nodes : 
+![image](./1.png)
+
+- Executing help command, listing all possible commands and their descriptions : 
+![image](./2.png)
+
+## To-Do : 
+- Fixing the shuffle bottleneck
+- Fixing the way sorting is called after shuffle stage
