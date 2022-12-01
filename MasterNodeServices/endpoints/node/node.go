@@ -19,7 +19,7 @@ func MainNodeBirth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//Let's not store worker node info staefully, entirely in memory
-	shell.PrintToShell(color.Colorize(color.Yellow, "[ENDPOINT] Request recived to add new worker node."))
+	shell.PrintToShell(color.Colorize(color.Yellow, "[ENDPOINT] Request received to add new worker node."))
 	res_body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
