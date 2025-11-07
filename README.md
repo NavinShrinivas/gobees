@@ -3,7 +3,7 @@
 Anywhere you see `SS` in this project, it's the short form for Shared Storage.
 
 ## Preface
-GoBees is yet another Map Reduce framework, written and powered by GO! This project was never built or meant for production cases, but given how well we have written it, it might just pass off in prod :)). During the development of this project few assumptions were made, these assumptions were solely to meet the submission deadlines. Some of these are : 
+GoBees is yet another Map Reduce framework, written and powered by GO!  During the development of this project few assumptions were made, these assumptions were solely to meet the submission deadlines. Some of these are : 
 ```
 > Output from mapper file HASSSSS to be <key,value> => comma is a must!
 
